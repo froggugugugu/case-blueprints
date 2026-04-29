@@ -28,6 +28,13 @@
 
 ## セットアップ
 
+> 💡 **GitHub UI でリポジトリを作成する場合の注意**
+> - ✅ 「Add a license」は選んで OK(MIT, Apache-2.0 等。`setup.sh` が保持します)
+> - ❌ 「Initialize with a README」は **選ばない**(`setup.sh` が用意します)
+> - ❌ `.gitignore` も **追加しない**(`setup.sh` が用意します)
+>
+> ローカルで先に `setup.sh` を実行してから `git remote add` で GitHub に push する手順なら、上記制約はありません。
+
 ### 1. プロジェクト設定の編集
 
 最初に `project-config.yaml` を開き、プリンタ機種・材料・設計ルールを記入してください:

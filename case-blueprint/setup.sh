@@ -28,30 +28,45 @@ fi
 TARGET="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# 既存ディレクトリの許容: 空 or .git のみ なら展開可
-# (GitHub clone 直後など .git だけある状態で利用するケースに対応)
+# 既存ディレクトリの許容: 空 or .git のみ、または .git + LICENSE のみ
+# (GitHub UI で「Add a license」した clone 直後の状態に対応)
 if [[ -e "$TARGET" ]]; then
     if [[ ! -d "$TARGET" ]]; then
         echo "Error: $TARGET はディレクトリではありません。" >&2
         exit 1
     fi
-    count=$(find "$TARGET" -mindepth 1 -maxdepth 1 -not -name '.git' | wc -l | tr -d ' ')
-    if [[ "$count" -gt 0 ]]; then
-        echo "Error: $TARGET は空ではありません(.git を除く)。" >&2
-        echo "  既存ファイルを移動するか、別のパスを指定してください。" >&2
+    unexpected=$(find "$TARGET" -mindepth 1 -maxdepth 1 \
+        -not -name '.git' \
+        -not -name 'LICENSE' | wc -l | tr -d ' ')
+    if [[ "$unexpected" -gt 0 ]]; then
+        echo "Error: $TARGET に予期しないファイルがあります(.git と LICENSE 以外)。" >&2
+        echo "  GitHub UI でリポジトリを作成する場合、'Add a license' のみ選択してください。" >&2
+        echo "  README や .gitignore は追加しないでください(setup.sh が用意します)。" >&2
         exit 1
     fi
-    echo "Note: 既存ディレクトリ $TARGET に展開します(.git があれば保持)"
+    [[ -f "$TARGET/LICENSE" ]] && echo "Note: 既存の LICENSE を保持します"
 fi
 
 # Create target directory if not exists
 mkdir -p "$TARGET"
+
+# LICENSE を保持するためコピー前にバックアップ
+LICENSE_BACKUP=""
+if [[ -f "$TARGET/LICENSE" ]]; then
+    LICENSE_BACKUP=$(mktemp)
+    cp "$TARGET/LICENSE" "$LICENSE_BACKUP"
+fi
 
 # Copy everything from case-blueprint/ to target
 cp -R "$SCRIPT_DIR/." "$TARGET/"
 
 # Remove setup.sh itself from target (template should not include the installer)
 rm -f "$TARGET/setup.sh"
+
+# Restore LICENSE if it was preserved
+if [[ -n "$LICENSE_BACKUP" ]]; then
+    mv "$LICENSE_BACKUP" "$TARGET/LICENSE"
+fi
 
 # Expand .template files: foo.ext.template -> foo.ext
 find "$TARGET" -type f -name '*.template' | while IFS= read -r tmpl; do
