@@ -28,12 +28,23 @@ fi
 TARGET="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# 既存ディレクトリの許容: 空 or .git のみ なら展開可
+# (GitHub clone 直後など .git だけある状態で利用するケースに対応)
 if [[ -e "$TARGET" ]]; then
-    echo "Error: $TARGET は既に存在します。別のパスを指定してください。" >&2
-    exit 1
+    if [[ ! -d "$TARGET" ]]; then
+        echo "Error: $TARGET はディレクトリではありません。" >&2
+        exit 1
+    fi
+    count=$(find "$TARGET" -mindepth 1 -maxdepth 1 -not -name '.git' | wc -l | tr -d ' ')
+    if [[ "$count" -gt 0 ]]; then
+        echo "Error: $TARGET は空ではありません(.git を除く)。" >&2
+        echo "  既存ファイルを移動するか、別のパスを指定してください。" >&2
+        exit 1
+    fi
+    echo "Note: 既存ディレクトリ $TARGET に展開します(.git があれば保持)"
 fi
 
-# Create target directory
+# Create target directory if not exists
 mkdir -p "$TARGET"
 
 # Copy everything from case-blueprint/ to target
