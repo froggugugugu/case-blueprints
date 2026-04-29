@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual envs
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# CAD backups
+*.FCBak
+*.FCStd1
+
+# Claude Code per-user state at repo root (case-blueprint/.claude/ は除外しない)
+/.claude/
+
+# Reference materials, removed before final release
+/example-for-delete/
