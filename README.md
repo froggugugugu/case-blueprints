@@ -49,14 +49,32 @@
 
 ---
 
+## フィードバックループ — 実プロジェクトをテンプレートに還元
+
+実際に作ったプロジェクトの学びをテンプレートに還元する仕組みがあります:
+
+```
+[my-gps-logger-case/]               ← setup.sh で生成した実プロジェクト
+       ↓ 丸ごとコピー
+[case-blueprints/feedback-staging/gps-logger-case/]   ← Git 追跡外、個人情報 OK
+       ↓ Claude が分析
+[case-blueprints/case-blueprint/]   ← skill / テンプレートを改善
+[case-blueprints/examples/gps-logger-case/]   ← 学びを整形して保存
+```
+
+詳細は [`feedback-staging/README.md`](feedback-staging/README.md) を参照。
+
+---
+
 ## ディレクトリの歩き方
 
 | ディレクトリ | 役割 | コピー対象? |
 |---|---|---|
 | `case-blueprint/` | **テンプレート本体**。setup.sh で利用者プロジェクトに展開される | ✅ |
 | `docs/` | 思想・スキーマ解説(リポ専用の読み物) | ❌ |
-| `examples/` | このテンプレートで作ったケースの完成例ショーケース | ❌ |
+| `examples/` | このテンプレートで作ったケースの完成例ショーケース(整形済み) | ❌ |
 | `snippets/` | 将来のレシピ集(空) | ❌ |
+| `feedback-staging/` | 実プロジェクトのフィードバック投入領域(Git 追跡外) | ❌ |
 
 詳細は各ディレクトリの README を参照。
 

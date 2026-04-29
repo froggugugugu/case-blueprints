@@ -26,3 +26,8 @@ Thumbs.db
 
 # Reference materials, removed before final release
 /example-for-delete/
+
+# Feedback staging — actual user projects dumped for analysis
+# README.md は追跡、その他は追跡外
+/feedback-staging/*
+!/feedback-staging/README.md
