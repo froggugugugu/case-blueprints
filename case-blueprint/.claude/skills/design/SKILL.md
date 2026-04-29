@@ -294,8 +294,7 @@ if __name__ == "__main__":
 
 ## 関連
 
-- `@constitution.md` — 5 不変原則(特に §1 ハイブリッドゾーン、§2 テキスト中心、§3 L2、§4 5 段階ゲート)
-- `@case-blueprint/.claude/skills/measure/SKILL.md` — 段階 1 の出力を入力にする
-- `@case-blueprint/.claude/skills/review-fix/SKILL.md` — 段階 4 でフィードバックを反映(構築中)
-- `@case-blueprint/schemas/case-spec.schema.yaml` — case-spec.yaml の機械可読スキーマ(構築中)
-- `@case-blueprint/schemas/case-config.schema.yaml` — case-config.yaml の機械可読スキーマ(構築中)
+- `@.claude/skills/measure/SKILL.md` — 段階 1 の出力を入力にする
+- `@.claude/skills/review-fix/SKILL.md` — 段階 4 でフィードバックを反映
+- `@schemas/case-spec.schema.yaml` — case-spec.yaml の機械可読スキーマ(構築中)
+- `@schemas/case-config.schema.yaml` — case-config.yaml の機械可読スキーマ(構築中)

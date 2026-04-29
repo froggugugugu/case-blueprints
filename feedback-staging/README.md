@@ -8,12 +8,19 @@
 ## 使い方
 
 ```bash
-# 実プロジェクトを丸ごとコピー
-cp -R ~/path/to/my-real-project ./feedback-staging/<project-name>/
+# 実プロジェクトをコピー(.git, .venv, __pycache__ は除外推奨)
+rsync -a --exclude='.git' --exclude='.venv' --exclude='__pycache__' \
+    ~/path/to/my-real-project/ ./feedback-staging/<project-name>/
+
+# rsync が無い場合は cp -R + 削除でも可
+# cp -R ~/path/to/my-real-project ./feedback-staging/<project-name>/
+# rm -rf ./feedback-staging/<project-name>/{.git,.venv,__pycache__}
 
 # Claude を起動し、分析を依頼
 claude
 ```
+
+**.git を除外する理由**: 実プロジェクトの履歴は分析に不要、サイズが膨らむ、誤って Git 履歴が混乱する可能性を避ける。
 
 Claude へのプロンプト例:
 

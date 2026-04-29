@@ -128,11 +128,10 @@ PETG / ABS / TPU の場合の値を併記。
 - **3MF の優位性**: 3MF は印刷向きをファイルに埋め込めるため、Bambu Studio / PrusaSlicer ではこちらが推奨
 - **STL は予備**: 互換性のため両方出力
 - **試作前提**: プリント後に「合わない」「干渉する」が見つかったら、段階 1 か 4 に戻ってループ(constitution §4)
-- **stl/3mf は git ignore**: `case-blueprint/.gitignore.template` で `output/print/*.stl` `*.3mf` を除外している。バイナリ派生物は履歴に残さない(constitution §2)
+- **stl/3mf は git ignore**: `.gitignore`(setup.sh で展開済み)で `output/print/*.stl` `*.3mf` を除外している。バイナリ派生物は履歴に残さない
 - **slicer-notes.md は追跡対象**: テキストなので git に残し、利用者の設定判断のトレーサビリティを確保
 
 ## 関連
 
-- `@constitution.md` — 5 不変原則(特に §2 テキスト中心、§4 5 段階ゲート)
-- `@case-blueprint/.claude/skills/review-fix/SKILL.md` — 段階 4、設計確定の前段階
-- `@case-blueprint/.gitignore.template` — output/print/ のバイナリは追跡しない
+- `@.claude/skills/review-fix/SKILL.md` — 段階 4、設計確定の前段階
+- `@.gitignore` — output/print/ のバイナリは追跡しない(setup.sh で .gitignore.template から展開済み)

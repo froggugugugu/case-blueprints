@@ -37,7 +37,7 @@ description: 段階 4 — 可視化レビューループ。利用者からのフ
 ### A. 数値変更(L2 メイン)
 
 - 利用者が `case-config.yaml` を直接編集している
-- 例: `wall_thickness: 2.4` → `2.0`、`fit_clearance: 0.2` → `0.3`
+- 例: `walls.thickness: 2.4` → `2.0`、`lid.fit_clearance: 0.2` → `0.3`(case-config.yaml の入れ子構造を反映)
 - 処理: 差分を検出し、`generator.py` を再実行するだけ
 
 ### B. 構造変更(自然言語)
@@ -121,6 +121,5 @@ A: 数値調整 / 構造変更 / 両方
 
 ## 関連
 
-- `@constitution.md` — 5 不変原則(特に §1 ハイブリッドゾーン、§3 L2、§4 5 段階ゲート)
-- `@case-blueprint/.claude/skills/design/SKILL.md` — 段階 2-3、初回設計
-- `@case-blueprint/.claude/skills/export/SKILL.md` — 段階 5、最終出力
+- `@.claude/skills/design/SKILL.md` — 段階 2-3、初回設計
+- `@.claude/skills/export/SKILL.md` — 段階 5、最終出力

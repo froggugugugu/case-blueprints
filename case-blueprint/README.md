@@ -47,7 +47,19 @@ source .venv/bin/activate
 pip install -e ".[dev]"            # cadquery + pytest + ruff
 ```
 
-### 3. Claude Code 起動
+### 3. Git 初期化(推奨)
+
+`/review-fix` skill が `case-config.yaml` の差分を検出するために Git を使います。
+
+```bash
+git init
+git add .
+git commit -m "Initial: case-blueprints テンプレートから生成"
+```
+
+`.gitignore` は `setup.sh` で展開済みなので、バイナリ派生物(STEP/STL/3MF)は自動的に除外されます。
+
+### 4. Claude Code 起動
 
 ```bash
 claude
@@ -97,7 +109,10 @@ claude
 寸法を変えたいときは `input/design-params/case-config.yaml` を直接編集:
 
 ```yaml
-wall_thickness: 2.4              # ← 数値を変えるだけ
+walls:
+  thickness: 2.0                 # ← 数値を変えるだけ
+lid:
+  fit_clearance: 0.3             # ← フタの嵌合をゆるくしたいときも数値だけ
 ```
 
 構造変更や曖昧な要望は `input/feedback/<date>.md` に日本語で記述:

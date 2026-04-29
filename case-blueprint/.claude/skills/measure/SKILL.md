@@ -175,6 +175,5 @@ notes: |                         # Step 6: 自由記述(空可)
 
 ## 関連
 
-- `@constitution.md` — 5 不変原則(特に §1 責務分離、§3 L2 ワークフロー)
-- `@case-blueprint/schemas/design-spec.schema.yaml` — 後段スキーマ(構築中)
-- `@case-blueprint/.claude/skills/design/SKILL.md` — 段階 2-3、`/measure` の出力を入力にする(構築中)
+- `@.claude/skills/design/SKILL.md` — 段階 2-3、`/measure` の出力を入力にする
+- `@schemas/case-spec.schema.yaml` — 後段スキーマ(構築中)
