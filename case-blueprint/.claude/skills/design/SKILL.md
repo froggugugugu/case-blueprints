@@ -116,9 +116,15 @@ case:
   name: my-router-case
   type: lidded_box                      # 当面 lidded_box。将来 hinged_box / split_shell を予約
   closure:
-    method: snap_fit                    # snap_fit / screws / magnetic
+    method: snap_fit                    # 単純: snap_fit / screws / magnetic
+                                         # 複合の例: snap_lip_with_hinge, snap_lip_with_screws
+    lid_axis: "+Z"                      # 蓋がどの面か(+X / -X / +Y / -Y / +Z / -Z)
+    # 複合 method の場合、サブ構造を必要に応じて追加(オープン構造):
+    # snap_fit: { lip_height: 2.0, fit_clearance: 0.2 }
+    # hinge:    { side: "-Y", axis: "Z", knuckle_diameter: 6.0, knuckle_count_body: 2, knuckle_count_lid: 1 }
+    # catch:    { side: "+Y", bump_diameter: 3.0, bump_protrusion: 0.6 }
   print_orientation:
-    body: bottom_down                   # 印刷時の向き
+    body: bottom_down                   # 印刷時の向き(底面が bed に接する基準)
     lid: top_down
   split:
     enabled: false                      # printer_bed に収まらない場合 true
@@ -126,6 +132,11 @@ case:
   layout:
     arrangement: stacked                # stacked / side_by_side / auto
     orientation: horizontal             # horizontal / vertical
+    notes: |                            # 自由記述。持ち方・ポート向き・ケーブル取り回し・内寸目標等
+      持ち方: 縦持ち、長軸 X が垂直。+X 端が上(蓋)、-X 端が下(底)。
+      ポート向き: USB-A / USB-C は +X 方向(蓋を開けると上端に揃う)。
+      ケーブル取り回し: バッテリー → M5 は U 字型、+X 方向に 34mm の余裕。
+      内寸目標: X × Y × Z = 約 125 × 54.5 × 23 mm。
   features:
     # type は文字列(オープン)。固定リストではない。Claude が必要に応じて新規 type を生成。
     # 以下は単なる例:
@@ -133,15 +144,25 @@ case:
     - { type: cable_port,        side: back,   position: [50, 16], diameter: 8 }
     - { type: display_window,    side: front,  size: [40, 20],   position: [0, 0] }
     - { type: carabiner_hole,    side: top,    diameter: 6 }
+    - { type: carabiner_tab,     side: "+Y",   shape: trapezoid, hole_diameter: 6, base_width_x: 22, tip_width_x: 14 }
     - { type: mounting_bracket,  target: router-main, style: ribs }
+    - { type: body_text,         side: "+Z",   text: "MY DEVICE", font_file: ToaHI-Rg.ttf, emboss_depth: 0.6 }
 
 objects:                                # /measure で採寸したオブジェクトのリスト
   - id: router-main
-    position: [0, 0, 0]                 # ケース内座標 (mm)
+    position: [0, 0, 0]                 # ケース内座標 (mm) — 内寸ボックスの -X/-Y/-Z 角を原点
     rotation: 0                         # Z 軸回りの回転 (度)
+    note: USB ポートを +X 側に向ける、など配置の意図を文章で残せる(オプション)
 ```
 
 ## `case-config.yaml` スキーマ(L2 主要編集対象)
+
+**重要**: `case-config.yaml` は固定スキーマではなく **オープン構造**:
+
+- 下記の `walls` / `lid` / `internal` / `fillet` は最小例(あらゆるケース設計で共通の基本ブロック)
+- features ごとに固有のパラメータブロックを **追加できる**(例: `carabiner_tab:` `hinge:` `catch:` `body_text:` 等)
+- パラメータブロックの key 名は **features の type と一致** させる慣習
+- 利用者が直接編集する場面が多いため、コメントで意味と単位を必ず明示する
 
 ```yaml
 walls:
@@ -150,19 +171,58 @@ walls:
 
 lid:
   thickness: 2.0
-  fit_clearance: 0.2                    # 嵌合の隙間
+  fit_clearance: 0.2                    # 嵌合の隙間(片側)
   lip_height: 3.0                       # 位置決めリップの高さ
+  # axis: "+Z"                          # case-spec.closure.lid_axis を反映する場合
 
 internal:
   object_clearance: 1.0                 # オブジェクト周辺の余裕 (mm)
   bracket_clearance: 0.3                # マウント枠との隙間
+  # cable_bend_allowance: 34.0          # ケーブル湾曲のための追加余裕(必要に応じて)
+  # z_margin: 1.0                       # Z 方向の追加マージン
 
 fillet:
   outer_radius: 2.0                     # 外側角の R
   inner_radius: 0.5                     # 内側角の R
+  # bottom_radius: 1.0                  # 底面エッジの R(手触り重視時)
+
+# --- features ごとの固有パラメータブロック(オープン構造、必要に応じて追加) ---
+
+# carabiner_tab:
+#   enabled: true
+#   shape: trapezoid
+#   base_width_x: 22.0
+#   tip_width_x: 14.0
+#   extend_y: 14.0
+#   thickness_z: 5.0
+#   hole_diameter: 6.0
+#   tip_fillet_radius: 4.0
+
+# hinge:
+#   enabled: true
+#   side: "-Y"
+#   knuckle_diameter: 6.0
+#   pin_diameter: 2.0
+#   knuckle_count_body: 2
+#   knuckle_count_lid: 1
+#   knuckle_clearance_z: 0.4
+
+# catch:
+#   enabled: true
+#   side: "+Y"
+#   bump_diameter: 3.0
+#   bump_protrusion: 0.6
+
+# body_text:
+#   enabled: true
+#   text: "MY DEVICE"
+#   font_file: ToaHI-Rg.ttf
+#   side: "+Z"
+#   emboss_depth: 0.6
 ```
 
 利用者は段階 4 で **このファイルを直接編集**して寸法を調整する(L2 ワークフロー)。
+features を追加するときは **対応するパラメータブロックも追加** する慣習。
 
 ## features の取り扱い方針
 

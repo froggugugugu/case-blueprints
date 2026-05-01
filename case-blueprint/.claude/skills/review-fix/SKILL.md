@@ -68,6 +68,8 @@ description: 段階 4 — 可視化レビューループ。利用者からのフ
 | 「○ を追加して」「○ を削除」 | B |
 | 「分割を変えて」「ヒンジに」 | B |
 | 「位置をずらして」 | A or B(features の position 編集 = B) |
+| **「○○ の代わりに △△ にしたい」(type 自体の置換)** | **B(構造変更 + type 名変更)** |
+| **「蓋の方向を +Z から +X に」(closure / case 構造の変更)** | **B(case 全体の構造変更)** |
 
 判別が曖昧な場合は AskUserQuestion で確認:
 
@@ -88,6 +90,8 @@ A: 数値調整 / 構造変更 / 両方
 - `case-spec.yaml` の features 配列を更新(追加・削除・position 変更)
 - 新 feature type が必要な場合、`generator.py` の `FEATURE_HANDLERS` 辞書と対応関数を追加
 - 例:「ベルクロループを付けて」→ `velcro_loop` type を新設、`apply_velcro_loop()` を generator.py に追加
+- **type の置換**(例: `carabiner_hole` → `carabiner_tab`)の場合、古い type の関数を削除し、新しい type の関数を追加。`case-config.yaml` のパラメータブロック名も連動更新
+- **case 全体の構造変更**(例: `lid_axis` 変更、`closure.method` の置換)の場合、`build_case_body` / `build_lid` を **書き直し**、関連する features の position も再計算が必要
 
 ### Step 4: 再実行
 
