@@ -28,3 +28,10 @@ Thumbs.db
 # CAD backups
 *.FCBak
 *.FCStd1
+
+# Third-party fonts (配布禁止のものが多い、ライセンスファイルのみ追跡)
+# 利用する場合は src/fonts/ に個別ダウンロード、LICENSE-<name>.txt を併置
+src/fonts/*.ttf
+src/fonts/*.otf
+src/fonts/*.woff
+src/fonts/*.woff2

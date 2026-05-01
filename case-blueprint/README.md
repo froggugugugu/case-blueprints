@@ -107,7 +107,51 @@ claude
 - `pyproject.toml` — Python 依存とツール設定
 - `schemas/` — 機械可読 YAML スキーマ
 - `src/` — Claude が実装する Python パッケージ
+- `src/fonts/` — サードパーティフォント(`body_text` feature 等で使用)
 - `tests/` — Claude が書くテスト
+
+---
+
+## サードパーティ素材(フォント等)の取り扱い
+
+`body_text` のような features でフォントを使う場合、以下のルールに従ってください:
+
+### 1. ライセンスファイルを併置
+
+`src/fonts/` にフォントを置くときは、必ずライセンス情報を併置:
+
+```
+src/fonts/
+├── LICENSE-<font-name>.txt      # フォントのライセンス本文(必須、追跡対象)
+└── <font-name>.ttf              # フォント本体(配布可否は要確認)
+```
+
+### 2. 配布禁止フォントは Git 追跡しない
+
+多くの商用・無料フォントは **再配布禁止**。`.gitignore` でフォント本体を除外し、ライセンスファイルのみ追跡:
+
+```
+# .gitignore に追加
+src/fonts/*.ttf
+src/fonts/*.otf
+src/fonts/*.woff
+src/fonts/*.woff2
+```
+
+利用者には「フォント本体を個別にダウンロードして `src/fonts/` に配置してください」と案内。
+
+### 3. フォント不在時のハンドリング
+
+`generator.py` がフォントを参照する場合(`body_text` feature 等)、ファイル不在時は分かりやすいエラーで案内する:
+
+```python
+font_path = Path("src/fonts") / cfg["body_text"]["font_file"]
+if not font_path.exists():
+    raise FileNotFoundError(
+        f"フォント {font_path} が見つかりません。"
+        f"src/fonts/LICENSE-*.txt を参照してダウンロードしてください。"
+    )
+```
 
 ---
 
