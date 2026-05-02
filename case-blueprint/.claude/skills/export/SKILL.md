@@ -18,6 +18,7 @@ description: 段階 5 — 確定済みの設計から最終プリント用 STL/3
 - `/review-fix` skill のゲートが通過している(設計確定)
 - `output/design/generator.py` が確定状態
 - `output/reports/validation.md` で ❌ がない
+- **推奨**: `/fit-check` を実行済みで `output/reports/fit-check.md` が ❌ なし(嵌合・干渉の網羅チェック済み)
 
 ## 入出力
 

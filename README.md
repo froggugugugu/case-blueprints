@@ -22,16 +22,21 @@
 
 ---
 
-## ワークフロー 5 段階
+## ワークフロー 5 段階 + 司会
 
-| # | 段階 | 主体 | 入出力 |
-|---|---|---|---|
-| 1 | オブジェクト入力 | 人間(対話) | → `input/objects/<name>.yaml` |
-| 2 | 要件統合 | Claude(初稿)+ 人間補正 | → `input/requirements/case-spec.yaml` |
-| 3 | 設計生成 | Claude | → `output/design/{generator.py, validator.py}` |
-| 4 | 可視化レビュー | Claude → 人間 → Claude(ループ) | → `output/preview/*.step` `*.stl` |
-| 5 | プリント出力 | Claude | → `output/print/*.stl` `*.3mf` |
+5 段階の設計ワークフローと、それを束ねる対話オーケストレータ `/concierge` で構成。
 
+| # | 段階 | skill | 主体 | 入出力 |
+|---|---|---|---|---|
+| - | 司会 | `/concierge` | Claude(対話) | 状態判定 + 次の一手を AskUserQuestion で提示 |
+| 1 | オブジェクト入力 | `/measure` | 人間(対話) | → `input/objects/<id>.yaml` |
+| 2 | 要件統合 | `/design` | Claude(初稿)+ 人間補正 | → `input/requirements/case-spec.yaml` |
+| 3 | 設計生成 | `/design` | Claude | → `output/design/{generator.py, validator.py}` |
+| 4 | 可視化レビュー | `/review-fix` | Claude → 人間 → Claude(ループ) | → `output/preview/*.step` `*.stl` |
+| 4-5 | 嵌合・干渉点検 | `/fit-check` | Claude | → `output/reports/fit-check.md` |
+| 5 | プリント出力 | `/export` | Claude | → `output/print/*.stl` `*.3mf` |
+
+`/concierge` で対話を始めるか、各 skill を直接呼ぶか、どちらでも可。
 詳細は [`constitution.md`](constitution.md) の原則 4 を参照。
 
 ---

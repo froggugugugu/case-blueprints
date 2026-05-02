@@ -102,6 +102,35 @@
 
 ---
 
+## 段階 4-5 橋渡し: 嵌合・干渉点検(`/fit-check`)
+
+### ゲート条件
+
+1. `output/design/fit_check.py` が存在(初回は skill が生成、利用者編集を尊重)
+2. `output/reports/fit-check.md` が最新(`generator.py` より新しい)
+3. ❌ がない、または利用者が明示的に「許容」を宣言
+
+### Fit-Check 標準チェック項目
+
+`/fit-check` SKILL.md の「チェック項目」より要約:
+
+| カテゴリ | 主なチェック |
+|---|---|
+| A. 内寸マージン | object_clearance / z_margin / 各軸 vs 実測 |
+| B. リップ嵌合 | fit_clearance / 蝶番側追加クリア / ラッチ側 |
+| C. 蝶番設計 | ナックル肉厚 / Z 高さ / pin_clearance / knuckle_clearance_z / **body_relief_clearance** / **lid_knuckle_extra_clearance_z** |
+| D. CAD 干渉 | `body.intersect(lid)` の体積、`ALLOWLIST` で意図的な重なりを管理 |
+| E. 印刷可能性 | bed 収納 / 壁厚 / print_orientation / lid_axis 整合 |
+| F. 拡張 | ねじ穴・差し込み・スナップ・磁石マウント等(`MECHANISMS` 追加で対応) |
+
+### 不通過時の対応
+
+- ❌: `/review-fix` に戻って `case-config.yaml` を調整、または構造変更
+- 意図的な微小重なり: `fit_check.py` の `ALLOWLIST` に label / max_mm3 / 理由を併記して登録
+- 解消したら ALLOWLIST から削除し、コメントで履歴を残す
+
+---
+
 ## 段階 5: プリント出力(`/export`)
 
 ### ゲート条件
