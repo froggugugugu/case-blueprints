@@ -10,18 +10,32 @@ walls:
 lid:
   axis: "+X"                     # 蓋を被せる面("+X" / "-X" / "+Z" 等)
   thickness: 2.5                 # 蓋天板厚み(キャップ天部)
-  fit_clearance: 0.2             # 嵌合リップと本体内寸の隙間(片側ごと)
+  fit_clearance: 0.4             # 嵌合リップと本体内寸の隙間(片側ごと)
+  # 2026-05-02 修正: 0.2 → 0.4。蝶番ピンで蓋位置が固定された状態でリップが
+  # 本体内寸に嵌合できない問題が発生。FDM 印刷誤差(片側 0.1-0.2mm)が 0.2mm の
+  # 余裕を消費していた。0.4mm にして合計 0.8mm の隙間を確保。
+  lip_hinge_side_extra_clearance: 1.1
+  # ↑ 2026-05-02 追加・調整: 蝶番側(-Y)のリップだけ追加で縮める量 (mm)。
+  # 蝶番ピンが蓋の Y 位置を拘束するため、蝶番側 Y で印刷誤差を吸収する余裕が必要。
+  # 反対側(+Y、ラッチ側)は弾性で逃がせるので fit_clearance のままで OK。
+  # 結果: 蝶番側 -Y のクリア = fit_clearance + extra = 1.5mm、+Y 側 = 0.4mm。
+  # リップは中心から +Y 側へ extra/2 = 0.55mm シフトする。
+  # 利用者要望(2026-05-02): 0.7mm では不安、1.5mm 欲しい → extra を 0.3 から 1.1 に増量。
   lip_height: 2.0                # 嵌合リップが本体内部に押し込まれる深さ
-  # 注: 蝶番旋回時のリップ最大変位 ≒ 0.04mm @ lip_height=2。fit_clearance 0.2 で余裕大
   # 印刷時のオーバーハングを抑えるため浅め(2mm)に設定
   lip_tip_fillet_radius: 0.5     # 嵌合リップ先端 (-X 端) の R 面取り (リードイン)
   lip_corner_fillet_radius: 0.5  # 嵌合リップ縦 4 エッジの R 面取り
 
 internal:
-  object_clearance: 0.5          # オブジェクト周辺の余裕 (mm)
+  object_clearance: 1.5          # オブジェクト周辺の余裕 (mm)
+  # 2026-05-02 拡大: 0.5 → 1.5。memory「ケース内径は実測値 +1mm 以上」適用。
+  # Y 方向: 30 + 24 + 1.5 = 55.5mm(従来 54.5、+1.0)
+  # Z 方向: max(21, 13.5+8+1.5) + 1.0 = 24.0mm(従来 23.0、+1.0)
   bracket_clearance: 0.3         # マウント枠との隙間
-  cable_bend_allowance: 34.0     # ケーブル湾曲のための +X 余裕(125mm 内寸の根拠: 91 + 34)
-  z_margin: 1.0                  # Z 方向の追加マージン (mm)、内寸 Z 23mm の根拠: 22 + 1
+  cable_bend_allowance: 35.0     # ケーブル湾曲 + 安全マージン (+X)。126mm 内寸の根拠: 91 + 34 + 1
+  # 2026-05-02 拡大: 34 → 35。X 内寸も +1mm 確保(memory 指針)。
+  z_margin: 1.0                  # Z 方向の追加マージン (mm)、内寸 Z 24mm の根拠: 23 + 1
+  # ↑ 値据え置き。object_clearance を 1.5 にしたことで Z 内寸は自動的に +1mm 拡大。
 
 fillet:
   outer_radius: 3.0              # 外側角(|X 縦エッジ)の R(手触り重視)
@@ -51,7 +65,22 @@ hinge:
   pin_clearance: 0.4             # ピン穴隙間(両側合計)、片側 0.2 ずつ
   knuckle_count_body: 2          # 本体側ナックル個数
   knuckle_count_lid: 1           # 蓋側ナックル個数(本体ナックルの間に挿入)
-  knuckle_clearance_z: 0.4       # 蓋ナックルと本体ナックル間の Z 方向クリアランス(片側)
+  knuckle_clearance_z: 0.4       # 本体ナックル Z 配置の基準クリアランス(片側)
+  # ↑ 本体側 STL の Z 位置を保つため、この値は変えないこと(本体再印刷不可の制約)
+  lid_knuckle_extra_clearance_z: 0.3
+  # ↑ 2026-05-02 追加: 蓋ナックル**のみ** Z 高さを片側ごとに縮める量 (mm)。
+  # 本体ナックル位置はそのままで、蓋ナックルだけ縮めることで実効 Z ギャップを
+  # 0.4 + 0.3 = 0.7mm に拡大。蝶番が回りやすくなる + ピン穴位置の許容誤差増加。
+  body_relief_clearance: 0.3
+  # ↑ 2026-05-02 追加: 本体壁の埋込部に蓋シリンダーが干渉するのを防ぐリリーフカット
+  # の半径方向クリアランス (mm)。蓋ナックル Z 位置で本体壁を半径
+  # (knuckle_diameter/2 + body_relief_clearance) で円筒状に抜く。
+  # 0 にするとリリーフカットなし(初期動作)。
+  lid_relief_clearance: 0.3
+  # ↑ 2026-05-02 追加(対称): 本体ナックル(壁埋込で +X 側に overlap_y だけはみ出す)
+  # の上半円が蓋プレート -Y 端と干渉するのを防ぐ。本体ナックル Z 位置で蓋プレートに
+  # 半径 (knuckle_diameter/2 + lid_relief_clearance) で円筒状の抜き穴を入れる。
+  # 旧 ALLOWLIST「本体ナックル右半円 × 蓋プレート -Y 端 1mm 帯」を CAD で解消する。
   margin_from_top: 0.0           # +X 端からのマージン (0 = ナックル軸が +X 端面と一致)
 
 body_text:

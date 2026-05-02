@@ -103,6 +103,8 @@ def build_lid(internal_dims, case_config):
     lid_t = case_config["lid"]["thickness"]
     lip_h = case_config["lid"]["lip_height"]
     fit = case_config["lid"]["fit_clearance"]
+    # 蝶番側(-Y)のリップだけ追加で縮める量。+Y 側はそのまま。
+    hinge_extra = case_config["lid"].get("lip_hinge_side_extra_clearance", 0.0)
     fillet_outer = case_config["fillet"]["outer_radius"]
 
     c_cfg = case_config.get("catch", {})
@@ -129,13 +131,17 @@ def build_lid(internal_dims, case_config):
             print(f"⚠ lid outer fillet skip: {e}")
 
     # ----- 2. 嵌合リップブロック(上板を貫通させ 3D 体積接続) -----
-    lip_y = iy - 2 * fit
+    # 蝶番側(-Y)だけ hinge_extra 縮める。+Y 端は iy/2 - fit のまま。
+    # 結果: -Y 端 = -iy/2 + fit + hinge_extra、+Y 端 = iy/2 - fit
+    # リップ Y 寸法は iy - 2*fit - hinge_extra、Y 中心は +hinge_extra/2 にシフト。
+    lip_y = iy - 2 * fit - hinge_extra
     lip_z = iz - 2 * fit
+    lip_center_y = hinge_extra / 2
     # リップは X ∈ [ox - lip_h, ox + lid_t] に伸ばし、上板 X ∈ [ox, ox + lid_t] と完全に重ねる
     lip = (cq.Workplane("YZ")
            .rect(lip_y, lip_z)
            .extrude(lip_h + lid_t)
-           .translate((ox - lip_h, 0, 0)))
+           .translate((ox - lip_h, lip_center_y, 0)))
 
     # 嵌合リップの面取り(縦コーナー → 先端の順で fillet)
     lip_tip_r = case_config["lid"].get("lip_tip_fillet_radius",
@@ -283,6 +289,13 @@ def apply_hinge(body, lid, feature, case_config, body_dims):
     n_body = h_cfg.get("knuckle_count_body", 2)
     n_lid = h_cfg.get("knuckle_count_lid", 1)
     z_clear = h_cfg.get("knuckle_clearance_z", 0.4)
+    # 蓋ナックルのみ片側ごとに Z を縮める量。本体ナックル位置は不変のまま実効 Z 隙間を広げる。
+    lid_extra_z = h_cfg.get("lid_knuckle_extra_clearance_z", 0.0)
+    # 蓋シリンダーが本体壁の埋込部と干渉しないよう、蓋ナックル Z 位置の本体壁を円筒状に抜く半径クリアランス
+    body_relief = h_cfg.get("body_relief_clearance", 0.0)
+    # 本体ナックルの +X 半円(壁埋込分が +X 側にはみ出す)が蓋プレート -Y 端と干渉するのを回避するため、
+    # 本体ナックル Z 位置の蓋プレートに円筒状のリリーフカットを掘る半径クリアランス
+    lid_relief = h_cfg.get("lid_relief_clearance", 0.0)
 
     if side != "-Y":
         print(f"⚠ hinge: side {side} 未対応(-Y のみ)")
@@ -334,12 +347,18 @@ def apply_hinge(body, lid, feature, case_config, body_dims):
     block_y_extent = body_face_y - axis_y  # = knuckle_r - overlap_y
 
     for owner, z_c, h in knuckles:
+        # 蓋ナックルだけ Z 高さを 2 * lid_extra_z 短くする(中心 z_c は本体間の中央のまま)
+        if owner == "lid" and lid_extra_z > 0:
+            h_eff = max(h - 2 * lid_extra_z, 1.0)
+        else:
+            h_eff = h
+
         # シリンダー
         cyl = (cq.Workplane("XY")
                .moveTo(axis_x, axis_y)
                .circle(knuckle_r)
-               .extrude(h)
-               .translate((0, 0, z_c - h / 2)))
+               .extrude(h_eff)
+               .translate((0, 0, z_c - h_eff / 2)))
 
         # 接続ブロック (cylinder と本体/蓋の壁面を結合)
         block = None
@@ -353,15 +372,15 @@ def apply_hinge(body, lid, feature, case_config, body_dims):
             block = (cq.Workplane("XY")
                      .moveTo((bx_lo + bx_hi) / 2, (axis_y + body_face_y) / 2)
                      .rect(bx_hi - bx_lo, block_y_extent)
-                     .extrude(h)
-                     .translate((0, 0, z_c - h / 2)))
+                     .extrude(h_eff)
+                     .translate((0, 0, z_c - h_eff / 2)))
 
-        # ピン穴
+        # ピン穴(蓋の場合は ピンクリアランスを広めに取りたいので h_eff + 余裕で貫通)
         pin_hole = (cq.Workplane("XY")
                     .moveTo(axis_x, axis_y)
                     .circle(pin_hole_r)
-                    .extrude(h + 2)
-                    .translate((0, 0, z_c - h / 2 - 1)))
+                    .extrude(h_eff + 2)
+                    .translate((0, 0, z_c - h_eff / 2 - 1)))
 
         knuckle_solid = cyl
         if block is not None:
@@ -370,8 +389,28 @@ def apply_hinge(body, lid, feature, case_config, body_dims):
 
         if owner == "body":
             body = body.union(knuckle_solid)
+            # 本体ナックル Z 位置の蓋プレートにリリーフカット(本体ナックル +X 半円が
+            # 壁埋込分 overlap_y だけ +Y 方向にせり出して蓋プレート -Y 端と干渉するのを回避)
+            # 半径は knuckle_r + lid_relief、Z 範囲は本体ナックル h(蓋ナックル位置とは別 Z)。
+            if lid_relief > 0 and overlap_y > 0:
+                lid_relief_cut = (cq.Workplane("XY")
+                                  .moveTo(axis_x, axis_y)
+                                  .circle(knuckle_r + lid_relief)
+                                  .extrude(h)
+                                  .translate((0, 0, z_c - h / 2)))
+                lid = lid.cut(lid_relief_cut)
         else:
             lid = lid.union(knuckle_solid)
+            # 蓋ナックル Z 位置の本体壁にリリーフカット(蓋シリンダーが本体壁の埋込部と干渉するのを回避)
+            # 抜き穴の Z 範囲は元の slot 高 h(本体ナックル端から z_clear 離れている)、
+            # 半径は knuckle_r + body_relief。本体ナックル(別 Z)とは重ならないので安全に cut できる。
+            if body_relief > 0:
+                relief_cut = (cq.Workplane("XY")
+                              .moveTo(axis_x, axis_y)
+                              .circle(knuckle_r + body_relief)
+                              .extrude(h)
+                              .translate((0, 0, z_c - h / 2)))
+                body = body.cut(relief_cut)
 
     return body, lid
 

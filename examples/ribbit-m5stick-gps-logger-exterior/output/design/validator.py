@@ -206,6 +206,7 @@ def check_hinge_z_fit(cfg):
     n_body = h_cfg.get("knuckle_count_body", 2)
     n_lid = h_cfg.get("knuckle_count_lid", 1)
     z_clear = h_cfg.get("knuckle_clearance_z", 0.4)
+    lid_extra_z = h_cfg.get("lid_knuckle_extra_clearance_z", 0.0)
     total = n_body + n_lid
     n_gaps = total - 1
     edge_clear = z_clear
@@ -215,6 +216,19 @@ def check_hinge_z_fit(cfg):
 
     knuckle_h = (oz - 2 * edge_clear - n_gaps * z_clear) / total
     assert knuckle_h >= 3.0, f"ナックル高さ {knuckle_h:.2f}mm < 3.0mm(短すぎ)"
+
+    lid_knuckle_h = max(knuckle_h - 2 * lid_extra_z, 0.0)
+    assert lid_knuckle_h >= 3.0, \
+        f"蓋ナックル実効高さ {lid_knuckle_h:.2f}mm < 3.0mm (lid_extra_z={lid_extra_z}mm が大きすぎる)"
+
+
+@check("嵌合クリアランス: FDM 推奨範囲(片側 0.3mm 以上)")
+def check_fit_clearance_recommended(cfg):
+    _, _, case_config, _ = cfg
+    fit = case_config["lid"]["fit_clearance"]
+    # FDM 印刷誤差(片側 0.1-0.2mm)を吸収するため、片側 0.3mm 以上を推奨
+    assert fit >= 0.3, \
+        f"fit_clearance 片側 {fit}mm は小さすぎ。FDM 公差吸収のため 0.3mm 以上推奨"
 
 
 @check("ラッチ: bump_protrusion が PLA 弾性域(0.3-1.0mm)")
@@ -271,7 +285,9 @@ def main():
                   f"先端R {tab_cfg.get('tip_fillet_radius')}mm")
     report.append(f"- 蝶番: ナックル外径 {h_cfg.get('knuckle_diameter')}mm × "
                   f"(本体 {h_cfg.get('knuckle_count_body')} + 蓋 {h_cfg.get('knuckle_count_lid')}), "
-                  f"ピン径 {h_cfg.get('pin_diameter')}mm, 取付面 {h_cfg.get('side')}")
+                  f"ピン径 {h_cfg.get('pin_diameter')}mm, 取付面 {h_cfg.get('side')}, "
+                  f"Z基準クリア {h_cfg.get('knuckle_clearance_z')}mm "
+                  f"(蓋ナックル追加縮小 {h_cfg.get('lid_knuckle_extra_clearance_z', 0.0)}mm/片側)")
     report.append(f"- ラッチ: bump 径 {c_cfg.get('bump_diameter')}mm × 突出 {c_cfg.get('bump_protrusion')}mm, "
                   f"取付面 {c_cfg.get('side')}")
     txt_cfg = case_config.get("body_text", {})
