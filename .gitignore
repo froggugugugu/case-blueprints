@@ -31,3 +31,21 @@ Thumbs.db
 # README.md は追跡、その他は追跡外
 /feedback-staging/*
 !/feedback-staging/README.md
+
+# Example projects: 派生物・依存・キャッシュは追跡しない(整形版のみ残す)
+examples/**/.git/
+examples/**/.venv/
+examples/**/*.egg-info/
+examples/**/__pycache__/
+examples/**/.pytest_cache/
+examples/**/.ruff_cache/
+examples/**/output/preview/*.step
+examples/**/output/preview/*.stl
+examples/**/output/print/*.stl
+examples/**/output/print/*.3mf
+examples/**/output/print/*.gcode
+examples/**/.claude/settings.local.json
+examples/**/src/fonts/*.ttf
+examples/**/src/fonts/*.otf
+examples/**/src/fonts/*.woff
+examples/**/src/fonts/*.woff2
