@@ -167,8 +167,11 @@ Q: 次に何しますか?
 
 - `@.claude/skills/measure/SKILL.md`     — 段階 1
 - `@.claude/skills/design/SKILL.md`      — 段階 2-3
-- `@.claude/skills/review-fix/SKILL.md`  — 段階 4
+- `@.claude/skills/review-fix/SKILL.md`  — 段階 4(物理ループ含む)
 - `@.claude/skills/fit-check/SKILL.md`   — 段階 4-5 橋渡し
 - `@.claude/skills/export/SKILL.md`      — 段階 5
 - `@.claude/skills/hinged-lid/SKILL.md`  — 横断: ヒンジ蓋ケースの closure 詳細
 - `@.claude/quality-gates.md`            — 5 段階ゲート条件
+- `@.claude/rules/materials-catalog.md`         — 材料データ正典(/export 連動)
+- `@.claude/rules/print-orientation-reasoning.md` — 印刷向き決定ルール(/design Step 5.5)
+- `@.claude/rules/measurement-feedback.md`      — 物理ループ規約(/review-fix C 種)

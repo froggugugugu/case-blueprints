@@ -2,7 +2,7 @@
 name: review-fix
 description: 段階 4 — 可視化レビューループ。利用者からのフィードバック(自然言語 or YAML 直接編集)を取り込み、case-spec.yaml / case-config.yaml / generator.py を更新して再実行する。
 when_to_use: 「ここを直したい」「壁を厚くして」「○○ を追加」「印刷したらハマらない」「フィードバックを反映」「case-config.yaml を編集した後の再実行」のとき。
-argument-hint: "[feedback-file]"
+argument-hint: "[feedback-file | measurements]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash(git diff *), Bash(.venv/bin/python *), Bash(python *)
 paths:
   - "input/feedback/**/*.md"
@@ -56,11 +56,36 @@ model: inherit
   3. 必要なら `generator.py` に新しい feature 関数を追加
   4. 再実行
 
+### C. 物理ループ(実測フィードバック)
+
+- 試作を印刷後、ノギス・組立確認の結果を **構造化された yaml** で受け取る
+- 様式: `@.claude/rules/measurement-feedback.md`
+- 雛形: `@.claude/templates/feedback-measurements.yaml`
+- 利用者ファイル名: `input/feedback/<YYYY-MM-DD>-measurements.yaml`
+- 処理:
+  1. `measurements[]` の `action`(ok/loose/tight/interfere/gap)から補正候補を推論
+  2. `adjustments_applied[]` を `case-config.yaml` に反映
+  3. 本体不変原則(P15)を確認 — `requires_body_reprint: true` の項目は利用者に再確認
+  4. `generator.py` 再実行 → `validator.py` → `output/preview/` 更新
+  5. 解消しない `unresolved[]` は次イテレーションへ持ち越し
+
+## 引数 `measurements` モード
+
+`/review-fix measurements` と呼ばれた場合は **C. 物理ループ** に直行する:
+
+1. 雛形をコピー(無ければ): `cp .claude/templates/feedback-measurements.yaml input/feedback/$(date +%Y-%m-%d)-measurements.yaml`
+2. 利用者にファイルを開いて測定値を埋めてもらう
+3. 利用者が「埋めた」と返答したら、yaml を読んで Step 3-C 以降を実行
+
+引数なしの通常モードでは A/B/C すべての feedback を統合的に処理する。
+
 ## 処理フロー
 
 ### Step 1: フィードバックの収集
 
-- `input/feedback/` 配下の `.md` ファイルを全て読み込む
+- `input/feedback/` 配下の `.md` / `.yaml` ファイルを全て読み込む
+  - `<date>-measurements.yaml` は **C 種(構造化実測)** として別ルートで処理
+  - `<date>.md` は **A/B 種(自然言語)** として処理
 - 既処理のフィードバック(タイムスタンプ等で判定)を除外
 - `case-config.yaml` の差分(git diff または mtime 比較)で数値編集を検出
 - `case-spec.yaml` の差分で構造編集を検出
@@ -98,6 +123,21 @@ A: 数値調整 / 構造変更 / 両方
 - 例:「ベルクロループを付けて」→ `velcro_loop` type を新設、`apply_velcro_loop()` を generator.py に追加
 - **type の置換**(例: `carabiner_hole` → `carabiner_tab`)の場合、古い type の関数を削除し、新しい type の関数を追加。`case-config.yaml` のパラメータブロック名も連動更新
 - **case 全体の構造変更**(例: `lid_axis` 変更、`closure.method` の置換)の場合、`build_case_body` / `build_lid` を **書き直し**、関連する features の position も再計算が必要
+
+#### C の場合(実測フィードバック)
+
+`@.claude/rules/measurement-feedback.md` の規約に沿う:
+
+1. `<date>-measurements.yaml` を `yaml.safe_load` で読む
+2. `adjustments_applied[]` を順に `case-config.yaml` に反映(指定があればそのまま、無ければ推論)
+3. `measurements[]` の `action` から推論する場合の対応表:
+   - `tight` → 該当する `fit_clearance` を +0.05(機構別: lid / hinge / magnet)
+   - `loose` → 該当する `fit_clearance` を −0.05
+   - `interfere` → 構造変更(リリーフカット追加 / 寸法見直し)。**利用者確認必須**
+   - `gap` → 蓋寸法 / 印刷向き / `fit_clearance` を見直し
+4. `requires_body_reprint: true` の項目があれば、利用者に「本体を再印刷します。よろしいですか?」と確認(P15)
+5. 反映完了後、`unresolved[]` を要約して提示し、次イテレーションの方針を相談
+6. ALLOWLIST 編集が必要な場合は `fit_check.py` の `ALLOWLIST` を更新 + `allowlist_changes` に履歴を残す
 
 ### Step 4: 再実行
 

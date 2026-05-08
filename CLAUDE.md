@@ -22,15 +22,16 @@ case-blueprints/
 │   ├── CLAUDE.md.template / project-config.yaml.template / pyproject.toml.template / .gitignore.template
 │   ├── input/{objects, requirements, design-params, feedback}/
 │   ├── output/{design, preview, print, reports}/
-│   ├── schemas/  — JSON-Schema(object / case-spec / case-config / project-config)
-│   ├── src/case_blueprint/{loader,geometry,exporter,feature_registry,validators,state,cli,closures/}
+│   ├── schemas/  — JSON-Schema(object / case-spec / case-config / project-config / material)
+│   ├── src/case_blueprint/{loader,geometry,exporter,feature_registry,validators,materials,state,cli,closures/,data/materials/}
 │   ├── tests/  — pytest smoke
 │   └── .claude/
 │       ├── settings.json.template      — permissions + hooks
 │       ├── skills/{lead, measure, design, review-fix, fit-check, export, hinged-lid}/
 │       ├── agents/{cad-validator, slicer-advisor}.md
-│       ├── rules/{constitution, cad-conventions, yaml-style, print-safety}.md
-│       ├── hooks/{session-start, post-edit-validate, stop-gate}.sh
+│       ├── rules/{constitution, cad-conventions, yaml-style, print-safety, closures-catalog, features-catalog, hardware-catalog, materials-catalog, measurement-feedback, print-orientation-reasoning, report-style}.md
+│       ├── hooks/{session-start, post-edit-validate, stop-gate, ...}.sh
+│       ├── templates/feedback-measurements.yaml  — 物理ループ雛形
 │       ├── pitfalls.md
 │       └── quality-gates.md
 ├── docs/{philosophy, schemas}/           # 思想・解説(リポ専用、コピー対象外)

@@ -1,0 +1,80 @@
+# 実測フィードバック テンプレート
+# 使い方:
+#   1. 試作を印刷したらこのファイルを以下にコピーする:
+#        input/feedback/<YYYY-MM-DD>-measurements.yaml
+#   2. ノギス・スケール・組立確認の結果を埋める
+#   3. /review-fix を呼ぶと Claude が diff_mm を見て case-config.yaml を補正する
+#
+# 原則(P15 / P16 / 構成原則 §1):
+#   - 本体パラメータは print_id が同じ間は変えない(同じ本体を再使用するため)
+#   - 蓋側で吸収できる項目から優先的に補正する
+#   - 「実物で削って合わせた」を action に書かない(暗黙許容禁止 — P16)
+#   - 解消できない場合は CAD 側で逃がす方法を /review-fix に相談する
+
+iteration: 1                          # この本体に対する試作回数
+printed_at: 2026-05-08                # 印刷日 (YYYY-MM-DD)
+print_id: case-body-v1                # 本体識別(STL ハッシュや手動 ID)
+material: pla                         # data/materials/<id>
+printer: prusa_mk4                    # 任意自由記述
+nozzle: 0.4mm
+layer_height_mm: 0.20
+
+# --- 寸法測定 ---
+# 各行: ノギス等で測れる寸法。CAD 上の値(cad_mm)と実測(measured_mm)の差を見る。
+# action は "ok" / "loose" / "tight" / "interfere" / "gap" のいずれか + 短い補足。
+# 採用補正は adjustments_applied 側で別途まとめる。
+measurements:
+  - label: 本体外寸 X
+    cad_mm: 125.0
+    measured_mm: 124.7
+    diff_mm: -0.3
+    action: ok
+    note: 収縮 0.24% 相当、許容内
+
+  - label: 本体外寸 Y
+    cad_mm: 54.5
+    measured_mm: 54.2
+    diff_mm: -0.3
+    action: ok
+
+  - label: 蓋外寸 X
+    cad_mm: 125.0
+    measured_mm: 124.7
+    diff_mm: -0.3
+    action: ok
+
+  - label: 嵌合(蓋を本体に挿入時)
+    cad_mm: null                       # 嵌合は寸法ではなく感触
+    measured_mm: null
+    diff_mm: null
+    action: tight
+    note: 「カチッ」と入るが、抜くのに両手が必要。0.05mm 緩めたい。
+
+  - label: ヒンジ可動域
+    cad_mm: null
+    measured_mm: null
+    diff_mm: null
+    action: ok
+    note: 90° 開く、引っ掛かりなし
+
+# --- 採用する補正 ---
+# /review-fix がこのリストを順に case-config.yaml に反映する。
+# 本体パラメータ変更時は requires_body_reprint: true を立てる(P15)。
+adjustments_applied:
+  - target: lid.fit_clearance
+    from: 0.20
+    to: 0.25
+    reason: 嵌合が固い(P5)。蓋側のみで吸収可能。
+    requires_body_reprint: false
+
+# --- 解消しなかった問題(次イテレーション持ち越し) ---
+unresolved:
+  - description: ヒンジ側のリップが擦れる感触(完全干渉ではない)
+    candidate_actions:
+      - lip_hinge_side_extra_clearance を 1.1 → 1.3 に増やす(P14)
+      - 蝶番ナックルの knuckle_clearance_z を 0.4 → 0.5 にする
+    deferred_to_iteration: 2
+
+# --- ALLOWLIST 追加・削除メモ ---
+# fit_check.py の ALLOWLIST に追加・削除した項目を併記すれば履歴が残る
+allowlist_changes: []

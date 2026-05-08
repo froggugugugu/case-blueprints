@@ -1,0 +1,50 @@
+id: pla_plus
+display_name: PLA+
+
+use_cases:
+  - PLA より耐久性が必要な屋内ケース
+  - ヒンジ・スナップが摩耗する可能性がある反復動作
+  - 工具運搬・落下リスクのある収納
+
+thermal:
+  print_temp_c: [200, 230]
+  bed_temp_c: [55, 65]
+  enclosure_required: false
+
+mechanical:
+  layer_adhesion: high
+  elasticity: medium
+  impact_resistance: medium
+  stiffness: high
+  notes: |
+    標準 PLA に靭性向上添加剤を加えた変種。剛性は高く保ちつつ
+    衝撃・継続荷重への耐性を上げている。ヒンジ・ラッチに最適。
+
+shrinkage:
+  linear_pct: 0.3
+  notes: 標準 PLA とほぼ同等
+
+environmental:
+  uv_resistance: low
+  water_resistance: medium
+  max_service_temp_c: 60
+  outdoor_use_acceptable: false
+
+print_settings:
+  layer_height_mm: [0.12, 0.28]
+  infill_pct: [15, 30]
+  print_speed_mm_s: [40, 70]
+  support_difficulty: low
+
+fit_clearance:
+  snap_fit:      [0.15, 0.30]
+  hinge_pin:     [0.15, 0.25]
+  magnet_pocket: [0.10, 0.20]
+  notes: PLA と同等。0.2 が標準
+
+post_process:
+  sanding: medium
+  painting: medium
+  drilling: high
+  gluing: high
+  acetone_smoothing: false

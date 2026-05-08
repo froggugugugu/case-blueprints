@@ -65,7 +65,7 @@ model: inherit
 プリンタベッドに置く想定の面を底面とする(通常は重力方向に置いたときの底)。
 これにより印刷向きの判断が後段で楽になる。
 
-## 手順(7 + 1 ステップ)
+## 手順(8 + 1 ステップ)
 
 各ステップは AskUserQuestion で人間から取得。回答が曖昧な場合は再質問する。
 
@@ -137,6 +137,49 @@ model: inherit
   サイズ: 3 機器をできるだけコンパクトに収める
   ```
 
+### Step 6.5: 構造化メタの取得(任意、L1 推奨)
+
+**注意**: ここから先の 6 項目はすべて optional。利用者が「不要」「あとで」と答えたらそのまま Step 7 へ進む。
+ただし、ここに値が入ると `/design` の features 推論・印刷向き判定・`/fit-check` の精度が**目に見えて上がる**ため、軽く誘導する。
+
+質問は AskUserQuestion で 1 つずつ。回答は構造化された YAML として保存する(schema 仕様は `@schemas/object.schema.yaml`)。
+
+#### 6.5-A. コネクタ / 操作部の構造化(`connectors[]` / `controls[]`)
+
+- 質問: 「コネクタやボタン・LED の位置を構造化して残しますか?(yes/skip)」
+- yes の場合、以下を 1 件ずつ繰り返し:
+  - 種別: `USB-C` / `USB-A` / `HDMI` / `DC` / `3.5mm` / `button` / `switch` / `dial` / `led` / `display` 等
+  - 配置面: `+X` / `-X` / `+Y` / `-Y` / `+Z` / `-Z`(または通称: front / back / left / right / top / bottom)
+  - 種別が **コネクタ** なら `connectors[]` に、ボタン等なら `controls[]` に振り分け
+- 「もう無い」と答えるまで繰り返す
+- これらは `cable_port` / `display_window` / `button_cutout` feature の position 推論に直結するので、面と簡易的な位置だけでも書く価値が高い
+
+#### 6.5-B. 発熱(`thermal`)
+
+- 質問: 「発熱しますか?(yes/skip)」
+- yes の場合:
+  - 局所発熱点があれば `hot_spots[]` に face / position / max_temp_c
+  - 全体: `max_surface_temp_c` / `requires_ventilation: true`
+- これがあると `/design` が `ventilation` feature を自動提案する
+
+#### 6.5-C. 重量(`weight_g`)
+
+- 質問: 「重量(g)が分かっていれば入力してください。不明なら skip」
+- 数値があれば magnetic closure の保持力検証(P30 想定)や落下耐性に使える
+
+#### 6.5-D. 把持面(`grip_zones[]`)
+
+- 質問: 「使用時に手で持つ面はありますか?(複数可、skip 可)」
+- 例: `top` / `+Y` / `front`
+- 装飾(emboss / 模様)を**避けるべき面**として `/design` に渡される
+
+#### 6.5-E. 印刷向きヒント(`orientation_hint`)
+
+- 質問: 「印刷時に底にしたい面 / 終層に出したい面 / 底にできない面はありますか?(skip 可)」
+- 例: `bottom_preference: "+Z"` / `top_preference: "-Z"` / `forbidden_bottoms: ["+X"]`
+- これは `/design` の `print_orientation` 決定で **最優先で尊重される**(`@.claude/rules/print-orientation-reasoning.md` 参照)
+- コネクタ面が `forbidden_bottoms` に入ると、その面が bed 接地にならない設計が選ばれる
+
 ### Step 7: 確認と保存
 
 - 入力内容を YAML 形式でプレビュー表示
@@ -165,6 +208,40 @@ tolerance: 0.5                   # Step 5: 公差 (mm)
 notes: |                         # Step 6: 自由記述(空可)
   本体はファン内蔵で発熱あり。
   背面に USB-C × 2、電源コネクタ × 1。
+
+# --- Step 6.5: 構造化メタ(全て optional)---
+# 書けば /design の features 推論・印刷向き判定・/fit-check の精度が上がる。
+# 書かなくても従来通り notes だけで動く。
+
+connectors:
+  - type: USB-C
+    face: "-Y"                   # 背面
+    position: [0, 10]            # 面中心からのオフセット (u, v)
+  - type: USB-C
+    face: "-Y"
+    position: [-25, 10]
+  - type: DC
+    face: "-Y"
+    position: [25, 10]
+controls:
+  - type: led
+    face: "+Y"
+    position: [40, -10]
+  - type: switch
+    face: "+Y"
+    position: [-40, 0]
+thermal:
+  hot_spots:
+    - face: "+Z"
+      position: [0, 0]
+      max_temp_c: 65
+  max_surface_temp_c: 50
+  requires_ventilation: true
+weight_g: 220
+grip_zones: ["+Z", "front"]
+orientation_hint:
+  bottom_preference: "+Z"
+  forbidden_bottoms: ["-Y"]      # コネクタ面は底にしない
 ```
 
 ## ゲート(段階 1 完了条件)
@@ -186,4 +263,6 @@ notes: |                         # Step 6: 自由記述(空可)
 ## 関連
 
 - `@.claude/skills/design/SKILL.md` — 段階 2-3、`/measure` の出力を入力にする
-- `@schemas/case-spec.schema.yaml` — 後段スキーマ(構築中)
+- `@schemas/object.schema.yaml` — 機械可読スキーマ(connectors / controls / thermal / orientation_hint 等含む)
+- `@schemas/case-spec.schema.yaml` — 後段スキーマ
+- `@.claude/rules/print-orientation-reasoning.md` — `orientation_hint` がここで使われる

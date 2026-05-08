@@ -194,6 +194,21 @@ python output/design/fit_check.py
 1. `output/reports/fit-check.md` が最新
 2. ❌ がない(または利用者が明示的に「許容」を宣言)
 
+## 物理ループ(印刷後の実測フィードバック)
+
+本スキルは **CAD 上の検査**であり、ここを通っても**実測との差**は別途取り込む必要がある。
+試作を印刷したら **物理ループ** に移る:
+
+1. `/export` で STL/3MF を出して印刷
+2. 利用者が組み立て・ノギス計測・操作確認を行う
+3. `/review-fix measurements` を呼ぶと、`.claude/templates/feedback-measurements.yaml` が
+   `input/feedback/<date>-measurements.yaml` にコピーされる
+4. 利用者が CAD 値 vs 実測値 vs 採用補正を埋める
+5. `/review-fix` がそれを `case-config.yaml` に反映 → `generator.py` 再実行 → 本スキルで再点検
+
+詳細は `@.claude/rules/measurement-feedback.md` を参照。CAD 検査と物理検査の **両輪**で
+品質を担保する設計。本体不変原則(P15)・暗黙許容禁止(P16)は物理ループでも適用。
+
 ## 注意事項
 
 - **利用者カスタムの尊重**: `fit_check.py` を利用者が編集していたら上書きしない。チェック項目の追加は `ALLOWLIST` / `PART_PAIRS` / `MECHANISMS` への追記で対応
@@ -205,10 +220,12 @@ python output/design/fit_check.py
 
 ## 関連
 
-- `@.claude/skills/review-fix/SKILL.md` — 段階 4
+- `@.claude/skills/review-fix/SKILL.md` — 段階 4 + 物理ループ反映
 - `@.claude/skills/export/SKILL.md` — 段階 5
 - `@.claude/skills/hinged-lid/SKILL.md` — closure=hinge_lever 時、本スキルの C/F カテゴリに固有チェックを追加する
 - `@.claude/quality-gates.md` — 5 段階ゲート条件
 - `@.claude/pitfalls.md` — リリーフカット忘れなどの落とし穴
+- `@.claude/rules/measurement-feedback.md` — 物理ループの様式
+- `@.claude/rules/materials-catalog.md` — 材料別 fit_clearance 推奨範囲
 - `output/design/validator.py` — 単一パーツの設計ルール検証
 - `output/design/fit_check.py` — このスキルが管理する嵌合チェック実装

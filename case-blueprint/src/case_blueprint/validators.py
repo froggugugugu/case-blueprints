@@ -2,6 +2,10 @@
 
 @check デコレータと標準チェック群。利用者プロジェクトの
 output/design/validator.py がこのモジュールを import して使う。
+
+チェック種別:
+- @check: AssertionError なら ❌(致命)、無ければ ✅
+- @warn:  ValueError なら ⚠(印刷ばらつき次第で許容)、無ければ ✅
 """
 
 from __future__ import annotations
@@ -9,24 +13,37 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable, Any
 
-CHECKS: list[tuple[str, Callable[[dict], None]]] = []
+CHECKS: list[tuple[str, str, Callable[[dict], None]]] = []  # (kind, name, fn)
 
 
 def check(name: str) -> Callable[[Callable[[dict], None]], Callable[[dict], None]]:
-    """登録デコレータ。AssertionError を raise すれば ❌、無ければ ✅。"""
+    """登録デコレータ(致命チェック)。AssertionError を raise すれば ❌。"""
 
     def deco(fn: Callable[[dict], None]) -> Callable[[dict], None]:
-        CHECKS.append((name, fn))
+        CHECKS.append(("check", name, fn))
         return fn
 
     return deco
 
 
-def run_all(cfg: dict) -> tuple[list[str], int, int]:
-    """全 CHECKS を実行し (report 行, pass 数, fail 数) を返す"""
+def warn(name: str) -> Callable[[Callable[[dict], None]], Callable[[dict], None]]:
+    """登録デコレータ(警告チェック)。ValueError を raise すれば ⚠。
+
+    印刷ばらつき次第で許容できる、絶対 NG ではないが見直し推奨の項目に使う。
+    """
+
+    def deco(fn: Callable[[dict], None]) -> Callable[[dict], None]:
+        CHECKS.append(("warn", name, fn))
+        return fn
+
+    return deco
+
+
+def run_all(cfg: dict) -> tuple[list[str], int, int, int]:
+    """全 CHECKS を実行し (report 行, pass 数, warn 数, fail 数) を返す"""
     lines: list[str] = []
-    n_pass = n_fail = 0
-    for name, fn in CHECKS:
+    n_pass = n_warn = n_fail = 0
+    for kind, name, fn in CHECKS:
         try:
             fn(cfg)
             lines.append(f"- ✅ {name}")
@@ -34,18 +51,26 @@ def run_all(cfg: dict) -> tuple[list[str], int, int]:
         except AssertionError as e:
             lines.append(f"- ❌ {name}: {e}")
             n_fail += 1
-    return lines, n_pass, n_fail
+        except ValueError as e:
+            if kind == "warn":
+                lines.append(f"- ⚠ {name}: {e}")
+                n_warn += 1
+            else:
+                lines.append(f"- ❌ {name}: {e}")
+                n_fail += 1
+    return lines, n_pass, n_warn, n_fail
 
 
 def write_report(cfg: dict, out_path: str | Path = "output/reports/validation.md") -> int:
     """レポートを書き出し、失敗数を返す"""
-    lines, n_pass, n_fail = run_all(cfg)
+    lines, n_pass, n_warn, n_fail = run_all(cfg)
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
     header = [
         "# Validation Report",
         "",
         f"- Pass: {n_pass}",
+        f"- Warning: {n_warn}",
         f"- Fail: {n_fail}",
         "",
     ]
@@ -116,3 +141,83 @@ def _check_outer_inner_relation(cfg: dict) -> None:
     # 概念チェック:case-config に外寸/内寸の両方が記入されている場合のみ実行
     # 通常は generator.py が internal から external を導出するため pass 扱い
     pass
+
+
+@check("default_material が登録済み")
+def _check_material_registered(cfg: dict) -> None:
+    from . import materials
+
+    mid = cfg["project"]["print_settings"]["default_material"].lower()
+    available = materials.list_available()
+    assert mid in available, (
+        f"default_material='{mid}' は data/materials/ に未登録。"
+        f"利用可能: {available}。"
+        f"新材料は src/case_blueprint/data/materials/<id>.yaml と "
+        f".claude/rules/materials-catalog.md を追加してください"
+    )
+
+
+@warn("snap_fit fit_clearance が材料推奨範囲内")
+def _warn_fit_clearance_snap_fit_material(cfg: dict) -> None:
+    from . import materials
+
+    method = cfg["case_spec"]["case"]["closure"].get("method", "")
+    if method not in ("snap_fit", "snap_lip_with_hinge"):
+        return  # 対象外 closure ならスキップ
+    mid = cfg["project"]["print_settings"]["default_material"].lower()
+    fc = cfg["case_config"].get("lid", {}).get("fit_clearance")
+    if fc is None:
+        return
+    ok, msg = materials.check_fit_clearance(mid, "snap_fit", float(fc), label="lid.fit_clearance")
+    if not ok:
+        raise ValueError(msg)
+
+
+@warn("hinge pin_clearance が材料推奨範囲内")
+def _warn_hinge_pin_clearance_material(cfg: dict) -> None:
+    from . import materials
+
+    method = cfg["case_spec"]["case"]["closure"].get("method", "")
+    if method not in ("hinge_lever", "snap_lip_with_hinge"):
+        return
+    mid = cfg["project"]["print_settings"]["default_material"].lower()
+    knuckle = cfg["case_config"].get("hinge", {}).get("knuckle", {})
+    pc = knuckle.get("pin_clearance")
+    if pc is None:
+        return
+    ok, msg = materials.check_fit_clearance(mid, "hinge_pin", float(pc), label="hinge.knuckle.pin_clearance")
+    if not ok:
+        raise ValueError(msg)
+
+
+@warn("magnet pocket fit が材料推奨範囲内")
+def _warn_magnet_pocket_material(cfg: dict) -> None:
+    from . import materials
+
+    method = cfg["case_spec"]["case"]["closure"].get("method", "")
+    if method != "magnetic":
+        return
+    mid = cfg["project"]["print_settings"]["default_material"].lower()
+    closure_cfg = cfg["case_config"].get("closure", {}).get("magnetic", {})
+    pf = closure_cfg.get("pocket_fit_clearance")
+    if pf is None:
+        return
+    ok, msg = materials.check_fit_clearance(mid, "magnet_pocket", float(pf), label="closure.magnetic.pocket_fit_clearance")
+    if not ok:
+        raise ValueError(msg)
+
+
+@warn("印刷温度が材料の推奨範囲内")
+def _warn_print_temp_material(cfg: dict) -> None:
+    from . import materials
+
+    mid = cfg["project"]["print_settings"]["default_material"].lower()
+    nozzle_temp = cfg["project"]["print_settings"].get("nozzle_temp_c")
+    if nozzle_temp is None:
+        return  # 設定なしならスキップ(slicer 側で設定する想定)
+    data = materials.load(mid)
+    lo, hi = data["thermal"]["print_temp_c"]
+    if not (lo <= float(nozzle_temp) <= hi):
+        raise ValueError(
+            f"nozzle_temp_c={nozzle_temp}°C は {mid} 推奨範囲 [{lo}, {hi}] の外"
+        )

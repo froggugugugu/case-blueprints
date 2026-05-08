@@ -1,0 +1,54 @@
+id: abs
+display_name: ABS
+
+use_cases:
+  - 高温環境(車内・屋外夏季)で使うケース
+  - 衝撃が想定される耐衝撃ケース
+  - アセトン蒸気研磨で表面光沢が必要な仕上げ
+
+thermal:
+  print_temp_c: [230, 260]
+  bed_temp_c: [90, 110]
+  enclosure_required: true
+
+mechanical:
+  layer_adhesion: medium
+  elasticity: medium
+  impact_resistance: high
+  stiffness: medium
+  notes: |
+    剛性は PLA より低いが衝撃・耐熱性で勝る。
+    層間接着は密閉チャンバーが無いと劣化する。
+
+shrinkage:
+  linear_pct: 0.8
+  notes: |
+    収縮率が大きく、反り(warping)が発生しやすい。
+    密閉チャンバー必須。寸法補正が必要な場合あり
+
+environmental:
+  uv_resistance: medium
+  water_resistance: high
+  max_service_temp_c: 95
+  outdoor_use_acceptable: true
+
+print_settings:
+  layer_height_mm: [0.16, 0.28]
+  infill_pct: [25, 40]
+  print_speed_mm_s: [30, 60]
+  support_difficulty: medium
+
+fit_clearance:
+  snap_fit:      [0.25, 0.40]
+  hinge_pin:     [0.20, 0.30]
+  magnet_pocket: [0.15, 0.25]
+  notes: |
+    収縮ばらつきを考慮して PLA より大きめ。
+    アセトン蒸気研磨後は寸法が縮むことも考慮
+
+post_process:
+  sanding: high
+  painting: high
+  drilling: high
+  gluing: high
+  acetone_smoothing: true

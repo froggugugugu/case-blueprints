@@ -1,0 +1,52 @@
+id: petg
+display_name: PETG
+
+use_cases:
+  - 屋外ケース・濡れる環境
+  - 衝撃を受ける可能性がある収納物
+  - ヒンジ・ラッチなど繰り返し動作する機構
+
+thermal:
+  print_temp_c: [220, 250]
+  bed_temp_c: [70, 85]
+  enclosure_required: false
+
+mechanical:
+  layer_adhesion: high
+  elasticity: medium
+  impact_resistance: medium
+  stiffness: medium
+  notes: |
+    PLA より粘り強く、ヒンジや snap_fit のような繰り返し荷重に強い。
+    層間接着が良いので壁が薄くても割れにくい。
+
+shrinkage:
+  linear_pct: 0.6
+  notes: PLA よりやや収縮大。寸法補正が必要な場合あり
+
+environmental:
+  uv_resistance: medium
+  water_resistance: high
+  max_service_temp_c: 75
+  outdoor_use_acceptable: true
+
+print_settings:
+  layer_height_mm: [0.16, 0.28]
+  infill_pct: [20, 40]
+  print_speed_mm_s: [30, 60]
+  support_difficulty: medium
+
+fit_clearance:
+  snap_fit:      [0.20, 0.35]
+  hinge_pin:     [0.20, 0.30]
+  magnet_pocket: [0.10, 0.20]
+  notes: |
+    PLA より摩擦が大きいので 0.05mm ほど大きめ推奨。
+    0.25 が標準
+
+post_process:
+  sanding: medium
+  painting: medium
+  drilling: high
+  gluing: medium
+  acetone_smoothing: false

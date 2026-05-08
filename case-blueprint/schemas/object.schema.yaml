@@ -54,6 +54,111 @@ properties:
       表示・操作面 / サイズ最適化方針 を自由記述。
       /design skill が features 推論の材料に使う
 
+  # ----- 任意:ケース設計に効く構造化メタ(任意フィールド)-----
+  # 全て optional。書けば /design / /review-fix / /fit-check が
+  # より精度の高い推論を行う(notes の自由記述だけでは漏れがちな項目)。
+
+  connectors:
+    type: array
+    description: |
+      物理コネクタ・ポート(USB-A/C, HDMI, ジャック等)の配置。
+      cable_port feature の position 推論や、印刷向きの「アクセス面下にしない」判断に使う。
+    items:
+      type: object
+      required: [type, face]
+      additionalProperties: false
+      properties:
+        type: { type: string, description: "USB-A / USB-C / HDMI / DC / 3.5mm 等" }
+        face: { enum: ["+X", "-X", "+Y", "-Y", "+Z", "-Z", front, back, left, right, top, bottom] }
+        position:
+          type: array
+          items: { type: number }
+          minItems: 2
+          maxItems: 2
+          description: "[u, v] face 上の座標 (mm)、face 中心が原点"
+        oblong:
+          type: array
+          items: { type: number, minimum: 0 }
+          minItems: 2
+          maxItems: 2
+          description: "[w, h] 矩形ポートの寸法 (mm)。円形は省略"
+        diameter: { type: number, exclusiveMinimum: 0 }
+
+  controls:
+    type: array
+    description: ボタン・スイッチ・ボリューム等の操作部。display_window や cutout 推論に使う。
+    items:
+      type: object
+      required: [type, face]
+      additionalProperties: false
+      properties:
+        type: { type: string, description: "button / switch / dial / led / display 等" }
+        face: { enum: ["+X", "-X", "+Y", "-Y", "+Z", "-Z", front, back, left, right, top, bottom] }
+        position:
+          type: array
+          items: { type: number }
+          minItems: 2
+          maxItems: 2
+        size:
+          type: array
+          items: { type: number, minimum: 0 }
+          minItems: 2
+          maxItems: 2
+
+  thermal:
+    type: object
+    description: 発熱特性。ventilation feature の判定や、隣接面に断熱層を置くか判断する材料。
+    additionalProperties: false
+    properties:
+      hot_spots:
+        type: array
+        description: 局所発熱点(CPU/レギュレータ等)
+        items:
+          type: object
+          required: [face, position, max_temp_c]
+          additionalProperties: false
+          properties:
+            face: { type: string }
+            position:
+              type: array
+              items: { type: number }
+              minItems: 2
+              maxItems: 2
+            max_temp_c: { type: number, exclusiveMinimum: 0 }
+      max_surface_temp_c: { type: number, exclusiveMinimum: 0 }
+      requires_ventilation: { type: boolean }
+
+  weight_g:
+    type: number
+    minimum: 0
+    description: 質量 (g)。磁石保持力の判定や落下耐性の参考値
+
+  grip_zones:
+    type: array
+    description: |
+      手で持つ面・グリップ要件のある面。装飾面(emboss テキスト等)を避けるためのヒント。
+      `+X` / `-X` 等の軸記法または top/bottom/left/right/front/back。
+    items:
+      type: string
+
+  orientation_hint:
+    type: object
+    description: |
+      印刷向き判断のヒント。`/design` の print_orientation 推論で使用。
+      print-orientation-reasoning.md ルールの入力。
+    additionalProperties: false
+    properties:
+      bottom_preference:
+        type: string
+        description: 底にしたい面(印刷時の bed 接地面)
+      top_preference:
+        type: string
+        description: 終層(細部出し)に向けたい面
+      forbidden_bottoms:
+        type: array
+        items: { type: string }
+        description: 底にできない面(コネクタ・ボタンが来る面など)
+
 allOf:
   - if:
       properties: { shape: { const: rectangular } }

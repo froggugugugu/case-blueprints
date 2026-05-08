@@ -45,9 +45,26 @@ model: claude-opus-4-7
 - `project-config.yaml` を読み込む
 - 既存の `case-spec.yaml` があれば読み込む(2 回目以降、人間補正を尊重)
 
-### Step 2: notes 解析と features 推論
+### Step 2: 構造化メタ + notes 解析 → features 推論
 
-各オブジェクトの `notes` フィールドを解析し、必要な features を推論する:
+#### 2.1 構造化メタの優先利用(L1)
+
+利用者が `/measure` Step 6.5 で構造化フィールドを埋めていれば **そちらを優先**:
+
+| object.yaml キー | features 推論 |
+|---|---|
+| `connectors[]` | 各コネクタの `face` / `position` / `oblong` / `diameter` から `cable_port` feature を生成 |
+| `controls[]` (display) | `display_window` feature(`size` を継承) |
+| `controls[]` (button/switch) | `button_cutout` 等の type を新規命名 |
+| `thermal.requires_ventilation: true` | `ventilation` feature を `+Z` 面に既定追加 |
+| `thermal.hot_spots[]` | hot_spot の face に `ventilation` を集中配置 |
+| `grip_zones[]` | 装飾 (`body_text` 等) は **これらの face を避ける** |
+
+`controls[].face` / `connectors[].face` の集合は **印刷向き判定**(Step 5 参照)でも使われる。
+
+#### 2.2 notes 解析(L0 フォールバック)
+
+構造化メタが無いオブジェクトは従来通り notes キーワードから推論:
 
 | キーワード(例) | 推論される feature type |
 |---|---|
@@ -76,6 +93,37 @@ model: claude-opus-4-7
 ### Step 5: case-spec.yaml 初稿生成
 
 下記スキーマに沿った YAML を `input/requirements/case-spec.yaml` に書き出す。
+**`print_orientation` の決定は Step 5.5(下記)を踏むこと**。
+
+### Step 5.5: print_orientation 決定(`@.claude/rules/print-orientation-reasoning.md` に従う)
+
+`case.print_orientation.body` / `lid` を機械的に決めず、以下の手順を踏む:
+
+1. **`object.orientation_hint` の集約**:
+   - 全オブジェクトの `orientation_hint.bottom_preference` / `top_preference` / `forbidden_bottoms` を集める
+   - `forbidden_bottoms` は **ケース全体の選択肢**から除外する強制制約として扱う
+   - `bottom_preference` / `top_preference` は同じ面を指せばその優先を尊重、矛盾すれば AskUserQuestion で利用者に確認
+
+2. **コネクタ・ボタン面を bed 接地から除外**:
+   - `connectors[].face` / `controls[].face` の集合に該当する面は body の bed 接地候補から外す
+   - 例: USB-C が `-Y` にあるなら `body` の bed は `-Y` 以外(典型的には `+Z` または `-Z`)
+
+3. **6 段階決定木の適用**(print-orientation-reasoning.md):
+   - 細部・最終層を **上** に → 蓋なら top_down が既定
+   - オーバーハング最小化 → ヒンジナックル等は X 軸方向に並べる
+   - 強度方向 vs 層方向 → 引っ張り荷重と層方向を直交
+   - 接地面積確保(反り対策、特に PETG/ABS)
+   - 印刷時間・収縮(`materials-catalog.md` の `shrinkage.linear_pct` を考慮)
+
+4. **既定の埋め草**:
+   - body: `bottom_down` (= `+Z bottom`)
+   - lid: `top_down` (= `-Z bottom`)
+   - latch-lever (closure=hinge_lever): `-Z bottom`(平面接地)
+
+5. **case-spec.yaml `case.layout.notes` に決定根拠を 1〜2 行で残す**:
+   - 例: `print_orientation: body bottom_down(コネクタ -Y を bed に置けないため + 細部の +Z 面を終層に)`
+
+迷ったら print-orientation-reasoning.md のルール番号(§1〜§6)を notes に書いて利用者と共有する。
 
 ### Step 6: 利用者に提示(ハイブリッドゾーン)
 
@@ -398,8 +446,12 @@ if __name__ == "__main__":
 
 ## 関連
 
-- `@.claude/skills/measure/SKILL.md` — 段階 1 の出力を入力にする
+- `@.claude/skills/measure/SKILL.md` — 段階 1 の出力を入力にする(connectors / controls / orientation_hint 含む)
 - `@.claude/skills/review-fix/SKILL.md` — 段階 4 でフィードバックを反映
 - `@.claude/skills/hinged-lid/SKILL.md` — closure.method = hinge_lever の詳細実装
-- `@schemas/case-spec.schema.yaml` — case-spec.yaml の機械可読スキーマ(構築中)
-- `@schemas/case-config.schema.yaml` — case-config.yaml の機械可読スキーマ(構築中)
+- `@.claude/rules/print-orientation-reasoning.md` — Step 5.5 の決定ルール
+- `@.claude/rules/closures-catalog.md` — closure.method の選択肢
+- `@.claude/rules/materials-catalog.md` — 材料別の収縮率(印刷向き判定で考慮)
+- `@schemas/case-spec.schema.yaml` — case-spec.yaml の機械可読スキーマ
+- `@schemas/case-config.schema.yaml` — case-config.yaml の機械可読スキーマ
+- `@schemas/object.schema.yaml` — object 構造化メタ(connectors / controls / thermal 等)

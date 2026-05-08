@@ -50,8 +50,18 @@ def test_setup_creates_expected_structure(expanded_project: Path):
     for skill in ("lead", "measure", "design", "review-fix", "fit-check", "export", "hinged-lid"):
         assert (p / f".claude/skills/{skill}/SKILL.md").exists(), f"missing skill: {skill}"
     for rule in ("constitution", "cad-conventions", "yaml-style", "print-safety",
-                 "closures-catalog", "features-catalog", "hardware-catalog", "report-style"):
+                 "closures-catalog", "features-catalog", "hardware-catalog",
+                 "materials-catalog", "measurement-feedback",
+                 "print-orientation-reasoning", "report-style"):
         assert (p / f".claude/rules/{rule}.md").exists(), f"missing rule: {rule}"
+
+    # 雛形(物理ループ)
+    assert (p / ".claude/templates/feedback-measurements.yaml").exists()
+
+    # 材料データ
+    for mat in ("pla", "petg", "pla_plus", "tpu", "abs"):
+        assert (p / f"src/case_blueprint/data/materials/{mat}.yaml").exists(), \
+            f"missing material: {mat}"
     for hook in ("session-start", "session-end", "stop-gate", "pre-tool-guard",
                  "post-edit-validate", "subagent-stop", "statusline"):
         assert (p / f".claude/hooks/{hook}.sh").exists(), f"missing hook: {hook}"
@@ -188,6 +198,58 @@ def test_pre_tool_guard_allows_other_writes(expanded_project: Path):
         cwd=p,
     )
     assert result.returncode == 0, f"stderr: {result.stderr}"
+
+
+def test_skills_reference_their_catalogs(expanded_project: Path):
+    """skill ↔ catalog の連動が SKILL.md の本文に張られていることを確認。
+
+    前回まで「カタログを書いたが skill が参照しない」という非対称があった。
+    本テストは最低限のクロスリファレンスがテンプレに残ることを E2E で保証する。
+    """
+    p = expanded_project
+
+    # /measure は object.schema と print-orientation-reasoning を参照
+    measure = (p / ".claude/skills/measure/SKILL.md").read_text(encoding="utf-8")
+    assert "object.schema.yaml" in measure
+    assert "print-orientation-reasoning" in measure
+    assert "orientation_hint" in measure
+    assert "connectors" in measure
+
+    # /design は print-orientation-reasoning と materials-catalog を参照
+    design = (p / ".claude/skills/design/SKILL.md").read_text(encoding="utf-8")
+    assert "print-orientation-reasoning" in design
+    assert "materials-catalog" in design
+    assert "orientation_hint" in design
+
+    # /export は materials.slicer_recommendations を呼ぶ手順がある
+    export = (p / ".claude/skills/export/SKILL.md").read_text(encoding="utf-8")
+    assert "slicer_recommendations" in export
+    assert "materials-catalog" in export
+
+    # slicer-advisor agent も同様
+    advisor = (p / ".claude/agents/slicer-advisor.md").read_text(encoding="utf-8")
+    assert "slicer_recommendations" in advisor
+    assert "materials-catalog" in advisor
+
+
+def test_materials_helper_works_in_expanded_project(expanded_project: Path):
+    """utility 利用者プロジェクトで `from case_blueprint import materials` が動作。"""
+    import os
+    import subprocess
+
+    p = expanded_project
+    src_path = p / "src"
+    env = os.environ.copy()
+    env["PYTHONPATH"] = f"{src_path}{os.pathsep}{env.get('PYTHONPATH', '')}"
+    result = subprocess.run(
+        [sys.executable, "-c",
+         "from case_blueprint import materials; "
+         "rec = materials.slicer_recommendations('pla'); "
+         "print(rec['nozzle_temp_c']['recommended'])"],
+        cwd=p, capture_output=True, text=True, env=env,
+    )
+    assert result.returncode == 0, f"stderr: {result.stderr}"
+    assert "205" in result.stdout  # PLA recommended nozzle temp
 
 
 def test_pre_tool_guard_allows_print_when_validation_passes(expanded_project: Path):

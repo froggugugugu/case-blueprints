@@ -1,0 +1,50 @@
+id: pla
+display_name: PLA
+
+use_cases:
+  - 屋内ケース・小物入れ・工具収納
+  - 試作品・形状検証
+  - 細部の出やすい装飾物(エンブレム、文字 emboss)
+
+thermal:
+  print_temp_c: [190, 220]
+  bed_temp_c: [50, 60]
+  enclosure_required: false
+
+mechanical:
+  layer_adhesion: medium
+  elasticity: low
+  impact_resistance: low
+  stiffness: high
+  notes: |
+    剛性は高いが脆い。落下衝撃や継続的な曲げに弱い。
+    薄肉(< 1.5mm)では割れやすい。
+
+shrinkage:
+  linear_pct: 0.3
+  notes: 反り・収縮ともに最小級。寸法精度が高い
+
+environmental:
+  uv_resistance: low
+  water_resistance: medium
+  max_service_temp_c: 55
+  outdoor_use_acceptable: false
+
+print_settings:
+  layer_height_mm: [0.12, 0.28]
+  infill_pct: [15, 30]
+  print_speed_mm_s: [40, 80]
+  support_difficulty: low
+
+fit_clearance:
+  snap_fit:      [0.15, 0.30]
+  hinge_pin:     [0.15, 0.25]
+  magnet_pocket: [0.10, 0.20]
+  notes: 0.2 が標準。固ければ 0.25 へ、ゆるければ 0.18 へ
+
+post_process:
+  sanding: medium
+  painting: medium
+  drilling: high
+  gluing: high
+  acetone_smoothing: false

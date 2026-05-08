@@ -53,7 +53,32 @@ model: inherit
 - STL を `output/print/` に出力
 - 可能なら 3MF も出力(印刷向きを埋め込める)
 
-### Step 3: スライサー設定の推奨を生成
+### Step 3: スライサー設定の推奨を生成(材料カタログ連動)
+
+#### 3.0 材料データの取得
+
+`project-config.yaml` の `print_settings.default_material` から `materials.slicer_recommendations(mid)` を呼んで推奨値を取得する:
+
+```python
+from case_blueprint import materials
+rec = materials.slicer_recommendations(project["print_settings"]["default_material"])
+```
+
+返り値は以下の構造(`@.claude/rules/materials-catalog.md` に対応):
+
+| キー | 中身 |
+|---|---|
+| `nozzle_temp_c.{min,max,recommended,first_layer}` | ノズル温度 (°C) |
+| `bed_temp_c.{min,max,recommended,first_layer}` | ベッド温度 (°C) |
+| `enclosure_required` | 密閉チャンバー必須か |
+| `layer_height_mm.{min,max,recommended}` | 層高 (mm) |
+| `infill_pct.{min,max,recommended,outdoor_or_hard_use}` | インフィル密度 (%) |
+| `print_speed_mm_s.{min,max,recommended,wall_top_layer}` | 印刷速度 (mm/s) |
+| `fan.{first_layer_pct,subsequent_pct,note?}` | ファン設定 |
+| `support_difficulty` | サポート除去難度 |
+| `warnings` | 印刷時注意リスト(反り・層間接着・UV 等) |
+
+これを下記 3.4 / 3.5 の表に転記する。**ハードコードしない**。利用者が `default_material` を切り替えれば自動的に連動する。
 
 `output/print/slicer-notes.md` に以下のテンプレ構造で記述:
 
@@ -121,29 +146,37 @@ bed 寸法 210 × 210 × 205mm に対し本体高 130mm は十分余裕。
 | 嵌合リップ(柱状、上方) | 直立、面取り済み | サポート不要 |
 ```
 
-#### 3.4 印刷設定(材料別)
+#### 3.4 印刷設定(材料カタログから自動生成)
+
+`materials.slicer_recommendations(mid)` の結果をテーブルに展開する。例(`default_material: pla` のとき):
 
 ```markdown
-## 印刷設定(PLA 推奨)
+## 印刷設定(PLA)
 
-| 項目 | 推奨値 |
-|---|---|
-| ノズル温度 | 210℃(初層 215℃) |
-| ベッド温度 | 60℃(初層 65℃) |
-| 層高 | 0.2mm |
-| 初層高 | 0.24mm |
-| 壁周回数 | 3(0.4mm ノズル × 3 = 1.2mm 壁厚) |
-| インフィル密度 | 20%(屋外・ハードユース時 40%) |
-| インフィルパターン | gyroid または cubic |
-| 印刷速度 | 50 mm/s(壁・トップ層は 30 mm/s) |
-| ファン | 100%(初層 0%) |
-| Brim / Skirt | 蓋は brim 5mm 推奨(接地面が小さい場合) |
+| 項目 | 推奨値 | 範囲 |
+|---|---|---|
+| ノズル温度 | 205℃(初層 210℃) | 190-220 |
+| ベッド温度 | 55℃(初層 60℃) | 50-60 |
+| 層高 | 0.20 mm | 0.12-0.28 |
+| 初層高 | 0.24 mm | — |
+| 壁周回数 | 3(0.4 ノズル × 3 = 1.2 mm 壁厚) | 設定値 |
+| インフィル密度 | 22%(屋外・ハードユース時 40%) | 15-30 |
+| インフィルパターン | gyroid または cubic | — |
+| 印刷速度 | 60 mm/s(壁・トップ層 30 mm/s) | 40-80 |
+| ファン | 100%(初層 0%) | — |
+| Brim / Skirt | 蓋は brim 5mm 推奨(接地面が小さい場合) | — |
+| サポート除去難度 | low | — |
+```
 
-### PETG の場合
-- ノズル: 235℃、ベッド: 80℃、ファン: 30〜50%、速度: 40 mm/s
+**他材料の例**: 利用者が `default_material: petg` に切り替えると、temperatures = 235°C / 78°C、層高範囲 0.16-0.28 等に自動更新される。
 
-### ABS の場合
-- ノズル: 245℃、ベッド: 100℃、エンクロージャ推奨
+`warnings` がある場合は本セクションの末尾に箇条書きで併記する:
+
+```markdown
+### 注意点(materials カタログ由来)
+
+- 線収縮率 0.6%、反り対策(brim 5mm 以上 / 接地面拡大)推奨
+- ABS は密閉チャンバー推奨(反り抑制・層間接着安定)
 ```
 
 #### 3.5 後処理
@@ -238,4 +271,7 @@ CAD で解決する原則を守ることで、利用者間で再現性が保た�
 - `@.claude/skills/review-fix/SKILL.md` — 段階 4、設計確定の前段階
 - `@.claude/skills/fit-check/SKILL.md` — 段階 4-5 橋渡し、❌ なしを確認してから export
 - `@.claude/skills/hinged-lid/SKILL.md` — closure=hinge_lever のとき、本 skill が出力する 3 部品目(レバー)の責任元
+- `@.claude/agents/slicer-advisor.md` — Step 3 で委譲できるサブエージェント
+- `@.claude/rules/materials-catalog.md` — `slicer_recommendations` の元データ
+- `src/case_blueprint/materials.py` — `slicer_recommendations(material_id)` ヘルパ
 - `@.gitignore` — output/print/ のバイナリは追跡しない(setup.sh で .gitignore.template から展開済み)

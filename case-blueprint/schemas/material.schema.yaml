@@ -1,0 +1,148 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://case-blueprints/schemas/material.schema.yaml"
+title: Material
+description: |
+  3D プリント材料の物性・推奨設定カタログ。
+  src/case_blueprint/data/materials/<id>.yaml に 1 ファイル 1 材料で保存する。
+  validators / closures が material.id を引いて推奨範囲をチェックする。
+
+type: object
+required:
+  - id
+  - display_name
+  - thermal
+  - mechanical
+  - shrinkage
+  - environmental
+  - print_settings
+  - fit_clearance
+additionalProperties: false
+
+properties:
+  id:
+    type: string
+    pattern: "^[a-z][a-z0-9_]*$"
+    description: 材料 ID(ファイル名と一致)。pla / petg / pla_plus / tpu / abs 等
+
+  display_name:
+    type: string
+    minLength: 1
+    description: 表示名(例: "PLA")
+
+  use_cases:
+    type: array
+    items: { type: string }
+    description: 推奨用途(例: "屋内ケース", "工具入れ")
+
+  thermal:
+    type: object
+    required: [print_temp_c, bed_temp_c]
+    additionalProperties: false
+    properties:
+      print_temp_c:
+        type: array
+        items: { type: number, exclusiveMinimum: 0 }
+        minItems: 2
+        maxItems: 2
+        description: "[min, max] ノズル温度 (°C)"
+      bed_temp_c:
+        type: array
+        items: { type: number, minimum: 0 }
+        minItems: 2
+        maxItems: 2
+        description: "[min, max] ベッド温度 (°C)"
+      enclosure_required:
+        type: boolean
+        description: 密閉チャンバー必須(ABS/ASA 等)
+
+  mechanical:
+    type: object
+    required: [layer_adhesion, elasticity, impact_resistance, stiffness]
+    additionalProperties: false
+    properties:
+      layer_adhesion:    { enum: [low, medium, high] }
+      elasticity:        { enum: [low, medium, high] }
+      impact_resistance: { enum: [low, medium, high] }
+      stiffness:         { enum: [low, medium, high] }
+      notes: { type: string }
+
+  shrinkage:
+    type: object
+    required: [linear_pct]
+    additionalProperties: false
+    properties:
+      linear_pct:
+        type: number
+        minimum: 0
+        description: 線収縮率 (%)。寸法補正の参考値
+      notes: { type: string }
+
+  environmental:
+    type: object
+    required: [uv_resistance, water_resistance, max_service_temp_c]
+    additionalProperties: false
+    properties:
+      uv_resistance:        { enum: [low, medium, high] }
+      water_resistance:     { enum: [low, medium, high] }
+      max_service_temp_c:   { type: number, exclusiveMinimum: 0 }
+      outdoor_use_acceptable: { type: boolean }
+
+  print_settings:
+    type: object
+    required: [layer_height_mm, infill_pct, support_difficulty]
+    additionalProperties: false
+    properties:
+      layer_height_mm:
+        type: array
+        items: { type: number, exclusiveMinimum: 0 }
+        minItems: 2
+        maxItems: 2
+        description: "[min, max] 推奨層高 (mm)"
+      infill_pct:
+        type: array
+        items: { type: number, minimum: 0, maximum: 100 }
+        minItems: 2
+        maxItems: 2
+      print_speed_mm_s:
+        type: array
+        items: { type: number, exclusiveMinimum: 0 }
+        minItems: 2
+        maxItems: 2
+      support_difficulty:
+        enum: [low, medium, high]
+        description: サポート除去の難易度
+
+  fit_clearance:
+    type: object
+    description: |
+      機構別の推奨 fit_clearance(片側 mm)。validate_* でこの範囲をエンフォース。
+    required: [snap_fit, hinge_pin, magnet_pocket]
+    additionalProperties: false
+    properties:
+      snap_fit:
+        type: array
+        items: { type: number, minimum: 0 }
+        minItems: 2
+        maxItems: 2
+        description: "[min, max] snap_fit / lid 嵌合の片側クリアランス"
+      hinge_pin:
+        type: array
+        items: { type: number, minimum: 0 }
+        minItems: 2
+        maxItems: 2
+      magnet_pocket:
+        type: array
+        items: { type: number, minimum: 0 }
+        minItems: 2
+        maxItems: 2
+      notes: { type: string }
+
+  post_process:
+    type: object
+    additionalProperties: false
+    properties:
+      sanding:    { enum: [low, medium, high] }
+      painting:   { enum: [low, medium, high] }
+      drilling:   { enum: [low, medium, high] }
+      gluing:     { enum: [low, medium, high] }
+      acetone_smoothing: { type: boolean }

@@ -1,0 +1,53 @@
+id: tpu
+display_name: TPU
+
+use_cases:
+  - パッキン・ガスケット(防水/防塵)
+  - 衝撃緩衝層・グリップ
+  - フレキシブルな蓋やヒンジ統合パーツ
+  - "ケース本体の主材ではなく、サブパーツ用途を想定"
+
+thermal:
+  print_temp_c: [220, 240]
+  bed_temp_c: [40, 60]
+  enclosure_required: false
+
+mechanical:
+  layer_adhesion: high
+  elasticity: high
+  impact_resistance: high
+  stiffness: low
+  notes: |
+    ゴム的な弾性。ショア硬度は銘柄により 85A〜95A まで幅広い。
+    剛性が必要な部位には不向き。snap_fit には硬めの 95A 推奨。
+
+shrinkage:
+  linear_pct: 0.8
+  notes: 印刷後の伸縮あり。寸法に余裕を持たせる
+
+environmental:
+  uv_resistance: medium
+  water_resistance: high
+  max_service_temp_c: 80
+  outdoor_use_acceptable: true
+
+print_settings:
+  layer_height_mm: [0.16, 0.24]
+  infill_pct: [10, 20]
+  print_speed_mm_s: [15, 30]
+  support_difficulty: high
+
+fit_clearance:
+  snap_fit:      [0.30, 0.50]
+  hinge_pin:     [0.25, 0.40]
+  magnet_pocket: [0.15, 0.30]
+  notes: |
+    弾性で誤差を吸収するため、剛性材より大きめのクリアランスが必要。
+    特に snap_fit は 0.4 程度を起点に調整
+
+post_process:
+  sanding: low
+  painting: low
+  drilling: low
+  gluing: low
+  acetone_smoothing: false
