@@ -1,0 +1,7 @@
+{
+  "name": "my-case-blueprint",
+  "description": "3D printable case blueprint (case-blueprints テンプレートから生成)",
+  "version": "0.1.0",
+  "license": "MIT",
+  "keywords": ["3d-printing", "cad", "cadquery", "case-design"]
+}

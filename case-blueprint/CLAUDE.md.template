@@ -49,3 +49,14 @@
 - 段階 4 を飛ばさない(validator ❌ を見逃すリスク)
 - `case-config.yaml` 編集後は `python output/design/generator.py` を実行
 - 設計確定 → `/fit-check` → `/export` の順を守る
+
+## セッション運用(/clear /compact)
+
+- **段階 3 → 4 の境界で `/clear` を推奨**: 設計生成の context を持ち込まずに
+  レビューを始めると前提に引きずられない。`output/preview/` を見てから新セッション。
+- **段階 4 が長引いたら `/compact`**: フィードバック反復で context が膨らんできたら
+  明示要約。残すべき情報(ハイブリッドゾーンの編集理由、ALLOWLIST の根拠 等)を指示する。
+- **段階 5 export 直前は `/clear` しない**: 直前の確定状態を保ったまま実行する。
+  hook(`pre-tool-guard.sh`)が `validation.md` / `fit-check.md` の ❌ を実ブロックする。
+- **statusline で常時可視化**: 上部バーに「📐 stage / val / fit / closure」が出る。
+  `/lead` を毎ターン呼ばなくても現在地が見える。
