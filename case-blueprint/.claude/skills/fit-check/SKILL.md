@@ -201,6 +201,7 @@ python output/design/fit_check.py
 
 - `@.claude/skills/review-fix/SKILL.md` — 段階 4
 - `@.claude/skills/export/SKILL.md` — 段階 5
+- `@.claude/skills/hinged-lid/SKILL.md` — closure=hinge_lever 時、本スキルの C/F カテゴリに固有チェックを追加する
 - `@.claude/quality-gates.md` — 5 段階ゲート条件
 - `@.claude/pitfalls.md` — リリーフカット忘れなどの落とし穴
 - `output/design/validator.py` — 単一パーツの設計ルール検証

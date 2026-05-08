@@ -162,10 +162,34 @@
 
 ---
 
+## 横断スキル(段階に属さないが、適用時のゲート条件あり)
+
+### `/hinged-lid`(closure.method = hinge_lever のとき)
+
+ヒンジ蓋ケースを採用した場合、`/design` 確定後 〜 `/fit-check` までの間に呼ぶ。
+段階を増減させるものではなく、段階 3 の `generator.py` と段階 4-5 の `fit_check.py` を **拡張する** 役割。
+
+#### ゲート条件(closure.method = hinge_lever のとき適用)
+
+1. `case-config.yaml` に `hardware:` `hinge:` `latch:` セクションが揃う
+2. `generator.py` に `build_hinge_assembly` `build_latch_pivot` `build_latch_catch` `build_latch_lever` `build_hinge_lever_closure` が存在
+3. `output/preview/` に `case-body.step` `case-lid.step` `latch-lever.step` の **3 部品** が出力済み
+4. `/fit-check` のヒンジ/ラッチ固有項目(レバー回転スイープ、フック内径 vs catch ピン径、末端ナックル肉厚等)が ❌ なし
+
+#### 不通過時の対応
+
+- `/hinged-lid scale` `/hinged-lid hardware` `/hinged-lid latch` で寸法・プリセットを調整
+- 個別の数値調整は `/review-fix` 経由で `case-config.yaml` を編集
+- 制約(ピン長との関係で scale が破綻する等)は `pitfalls.md` P17 を参照
+
+---
+
 ## 関連
 
 - `@.claude/skills/measure/SKILL.md` — 段階 1
 - `@.claude/skills/design/SKILL.md` — 段階 2-3
 - `@.claude/skills/review-fix/SKILL.md` — 段階 4
+- `@.claude/skills/fit-check/SKILL.md` — 段階 4-5 橋渡し
 - `@.claude/skills/export/SKILL.md` — 段階 5
+- `@.claude/skills/hinged-lid/SKILL.md` — 横断(機構特化)
 - `@.claude/pitfalls.md` — 落とし穴と対処

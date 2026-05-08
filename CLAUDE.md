@@ -38,7 +38,7 @@ case-blueprints/
 - **責務分離**(§1): `case-blueprint/input/` は人間管理、`output/` は AI 管理。例外は `input/requirements/case-spec.yaml`(Claude 初稿+人間補正のハイブリッド)
 - **テキスト中心**(§2): ソース・オブ・トゥルースは CadQuery (Python) + YAML。バイナリ(STEP/STL/3MF)は派生物で、逆流させない
 - **L2 ワークフロー**(§3): 利用者は Python を読まずに使える前提で設計する。skill が「人間に Python を書かせる」前提を取らないこと
-- **5 段階ゲート**(§4): 採寸 → 要件統合 → 設計生成 → 可視化レビュー → プリント出力。skill は `case-blueprint/.claude/skills/{measure, design, review-fix, fit-check, export}` の 5 つでカバー、加えて司会の `concierge` で 6 つ
+- **5 段階ゲート**(§4): 採寸 → 要件統合 → 設計生成 → 可視化レビュー → プリント出力。skill は `case-blueprint/.claude/skills/{measure, design, review-fix, fit-check, export}` の 5 つでカバー、加えて進行管理の `lead`(PdM 相当)、機構特化の `hinged-lid` を含めて計 7 つ
 - **テンプレート境界**(§5): `case-blueprint/` 配下のみコピー対象。リポ専用リソース(`docs/`, `examples/`, `snippets/`)とテンプレート本体を混ぜない
 
 ## Build / Test / Lint
@@ -63,8 +63,8 @@ case-blueprints/
 
 ### `case-blueprint/.claude/skills/`
 - 新規 skill 追加時は既存の構造に揃える(frontmatter + 「目的」「入出力」「手順」「ゲート」)
-- skill 数は最小に保つ(現在 6: concierge / measure / design / review-fix / fit-check / export)。安易に増やさない
-- 5 段階ワークフローのいずれかに対応する、または明確に補完する skill のみ追加
+- skill 数は最小に保つ(現在 7: lead / measure / design / review-fix / fit-check / export / hinged-lid)。安易に増やさない
+- 5 段階ワークフローのいずれかに対応する、または明確に補完する skill のみ追加。機構特化の横断スキル(`hinged-lid` 等)は段階に属さず、closure や嵌合機構の詳細を埋める用途に限定する
 
 ### `docs/`, `examples/`, `snippets/`(コピー対象外)
 - ここに置いたファイルは利用者プロジェクトにはコピーされない

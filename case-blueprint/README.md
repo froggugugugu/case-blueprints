@@ -14,17 +14,18 @@
 
 ---
 
-## ワークフロー 5 段階 + 司会
+## ワークフロー 5 段階 + プロジェクトリード + 機構特化
 
 | # | 段階 | skill | 主体 | 入出力 |
 |---|---|---|---|---|
-| - | 司会 | `/concierge` | Claude(対話) | 状態判定 + 次の一手 |
+| - | 進行管理 | `/lead` | Claude(対話) | 状態判定 + 次の一手 |
 | 1 | オブジェクト入力 | `/measure` | 人間(対話) | → `input/objects/<id>.yaml` |
 | 2 | 要件統合 | `/design` | Claude(初稿)+ 人間補正 | → `input/requirements/case-spec.yaml` |
 | 3 | 設計生成 | `/design` | Claude | → `output/design/{generator.py, validator.py}` |
 | 4 | 可視化レビュー | `/review-fix` | Claude → 人間 → Claude(ループ) | → `output/preview/*.step` `*.stl` |
 | 4-5 | 嵌合・干渉点検 | `/fit-check` | Claude | → `output/reports/fit-check.md` |
 | 5 | プリント出力 | `/export` | Claude | → `output/print/*.stl` `*.3mf` |
+| 横断 | ヒンジ蓋詳細 | `/hinged-lid` | Claude | closure.method = hinge_lever の具体寸法を埋める |
 
 ---
 
@@ -76,14 +77,15 @@ claude
 
 起動後、以下の skill を使用します:
 
-- `/concierge` — **司会**: 状態判定 + 次の一手を提示(対話で進める場合の入口)
+- `/lead` — **プロジェクトリード(PdM 相当)**: 状態判定 + 次の一手を提示(対話で進める場合の入口)
 - `/measure` — 段階 1: オブジェクトを対話的に採寸
 - `/design` — 段階 2-3: 要件統合と設計生成
 - `/review-fix` — 段階 4: フィードバックを反映
 - `/fit-check` — 段階 4-5 橋渡し: 嵌合・干渉の点検
 - `/export` — 段階 5: 最終 STL/3MF 出力
+- `/hinged-lid` — **横断(機構特化)**: ヒンジ蓋ケースの closure 詳細を埋める
 
-おすすめは `/concierge` から始める方法。「次に何をすべきか」を考えずに進められます。
+おすすめは `/lead` から始める方法。「次に何をすべきか」を考えずに進められます。
 
 ---
 
@@ -103,7 +105,7 @@ claude
 | ディレクトリ | 段階 | 役割 |
 |---|---|---|
 | `output/design/` | 3 | CadQuery ソース(generator.py / validator.py) |
-| `output/preview/` | 4 | 可視化用 STEP / STL(Fusion 等で開く) |
+| `output/preview/` | 4 | 可視化用 STEP / STL(任意の STEP/STL ビューアで開く) |
 | `output/print/` | 5 | 最終プリント用 STL / 3MF |
 | `output/reports/` | 各段階 | 寸法整合チェック等のレポート |
 

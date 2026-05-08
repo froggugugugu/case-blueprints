@@ -105,7 +105,7 @@ description: 段階 2-3 — input/objects/*.yaml と project-config.yaml を統�
 
 ### Step 6: 利用者に提示
 
-- 「`output/preview/case-body.step` を Fusion / FreeCAD で開いて確認してください」
+- 「`output/preview/case-body.step` を任意の STEP/STL ビューアで開いて確認してください」
 - 「`output/reports/validation.md` で検証結果を確認」
 - 「修正は `/review-fix` を使うか、`input/design-params/case-config.yaml` を直接編集」
 
@@ -114,15 +114,17 @@ description: 段階 2-3 — input/objects/*.yaml と project-config.yaml を統�
 ```yaml
 case:
   name: my-router-case
-  type: lidded_box                      # 当面 lidded_box。将来 hinged_box / split_shell を予約
+  type: lidded_box                      # lidded_box(フタ付き箱)/ hinged_box(蝶番蓋)/ split_shell(将来予約)
   closure:
     method: snap_fit                    # 単純: snap_fit / screws / magnetic
                                          # 複合の例: snap_lip_with_hinge, snap_lip_with_screws
+                                         # ヒンジ + 独立レバーラッチ(/hinged-lid 対応): hinge_lever
     lid_axis: "+Z"                      # 蓋がどの面か(+X / -X / +Y / -Y / +Z / -Z)
     # 複合 method の場合、サブ構造を必要に応じて追加(オープン構造):
     # snap_fit: { lip_height: 2.0, fit_clearance: 0.2 }
     # hinge:    { side: "-Y", axis: "Z", knuckle_diameter: 6.0, knuckle_count_body: 2, knuckle_count_lid: 1 }
     # catch:    { side: "+Y", bump_diameter: 3.0, bump_protrusion: 0.6 }
+    # hinge_lever を選んだ場合、hardware: / hinge: / latch: の詳細は /hinged-lid が埋める
   print_orientation:
     body: bottom_down                   # 印刷時の向き(底面が bed に接する基準)
     lid: top_down
@@ -352,9 +354,23 @@ if __name__ == "__main__":
 - **「初回 50%」を念頭に**: 完璧な初稿を目指さない。段階 4 で詰める前提(README「ワークフローのリズム感」参照)
 - **features の type 拡張**: 新 type が必要なら、Claude は `FEATURE_HANDLERS` 辞書と対応関数を generator.py に追加する
 
+## closure 詳細を `/hinged-lid` に委ねる
+
+`closure.method = hinge_lever`(蓋を蝶番で開閉し、独立レバーでラッチ)を選んだ場合、
+本 skill では closure を **抽象的に** 決めるのみで、具体的な寸法・部品分割・
+ハードウェア解決は **横断スキル `/hinged-lid`** に委ねる:
+
+- 本 skill の出力: `closure.method: hinge_lever`、`case.type: hinged_box`
+- `/hinged-lid` の出力: `case-config.yaml` への `hardware:` `hinge:` `latch:` 追記、
+  `generator.py` への `build_hinge_assembly` `build_latch_*` `build_latch_lever` 追加、
+  `latch-lever.step/.stl` の追加出力
+
+`/design` 完了後、`/lead` または利用者の判断で `/hinged-lid init` を呼ぶ。
+
 ## 関連
 
 - `@.claude/skills/measure/SKILL.md` — 段階 1 の出力を入力にする
 - `@.claude/skills/review-fix/SKILL.md` — 段階 4 でフィードバックを反映
+- `@.claude/skills/hinged-lid/SKILL.md` — closure.method = hinge_lever の詳細実装
 - `@schemas/case-spec.schema.yaml` — case-spec.yaml の機械可読スキーマ(構築中)
 - `@schemas/case-config.schema.yaml` — case-config.yaml の機械可読スキーマ(構築中)

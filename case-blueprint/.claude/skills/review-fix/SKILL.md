@@ -18,7 +18,7 @@ description: 段階 4 — 可視化レビューループ。利用者からのフ
 
 - `/design` skill が実行済み(`output/design/generator.py` `validator.py` が存在)
 - `output/preview/` に STEP/STL がある
-- 利用者が Fusion / FreeCAD で確認済み(または直接 STEP/STL を確認)
+- 利用者が STEP/STL ビューアで確認済み(または直接ファイルを確認)
 
 ## 入出力
 

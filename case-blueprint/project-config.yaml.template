@@ -11,11 +11,11 @@ project:
   version: 0.1.0
 
 cad_backend:
-  type: cadquery                  # 当面は cadquery 固定。将来 openscad / freecad-py を予約
+  type: cadquery                  # 当面は cadquery 固定(constitution §2)。将来は他形式の Python CAD を予約
   python_version: "3.11"
 
 print_settings:
-  printer_bed: [220, 220, 250]    # X, Y, Z (mm)。例: Bambu A1 / P1S
+  printer_bed: [220, 220, 250]    # X, Y, Z (mm)。お使いのプリンタの造形領域を記入
   nozzle_diameter: 0.4            # mm
   default_material: PLA           # PLA / PETG / ABS / TPU など
 

@@ -201,6 +201,20 @@
 - CAD で解消できる場合は解消し、`ALLOWLIST` から削除 + コメントで履歴を残す
 - 「明示許容」と「暗黙許容」を区別する。後者は `/fit-check` で検出されるべき
 
+### P17. ヒンジ蓋スキルの scale で固定ピン長を見落とす
+
+**症状**: `/hinged-lid scale 1.5` のような拡大で蝶番が組み立たない、ナックルが薄すぎて割れる
+
+**原因**: `hardware:` のピン/ねじ長は **物理スペック**(M2×28mm 等)で固定。ナックル外径やレバー寸法だけ scale するとピン長が足りない、または余りすぎる。
+
+**対処**:
+- scale 前に `usable = pin_length - end_clear` を計算、`thickness = (usable - gaps × z_clearance) / N` で各ナックル厚を確認
+- 制約超過(`thickness < 2mm` 等)を検出したら scale 中止、以下のいずれかを案内:
+  1. `hardware:` プリセットを長尺(`m2_long`)に切替
+  2. `pattern:` のナックル数を増やす(例: `[body, lid, body]` → `[body, lid, body, lid, body]`)
+  3. `custom` プリセットで任意のピン長を指定
+- `/hinged-lid` の `scale` モードは事前検証して制約超過時は中断する設計を維持
+
 ---
 
 ## 関連

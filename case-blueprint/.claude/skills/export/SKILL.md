@@ -31,6 +31,7 @@ description: 段階 5 — 確定済みの設計から最終プリント用 STL/3
 | | `output/print/case-lid.stl` | 同上 |
 | | `output/print/case-body.3mf` | 3MF(印刷向きを埋め込める、推奨) |
 | | `output/print/case-lid.3mf` | 同上 |
+| | `output/print/latch-lever.stl` `.3mf` | `closure.method = hinge_lever` のとき追加(`/hinged-lid` 経由) |
 | | `output/print/slicer-notes.md` | スライサー設定推奨 |
 
 ## 処理フロー
@@ -61,9 +62,12 @@ description: 段階 5 — 確定済みの設計から最終プリント用 STL/3
 | `case-body.stl` | 本体(互換用) | あり(物理的に回転済み) |
 | `case-lid.3mf`  | 蓋(推奨) | あり |
 | `case-lid.stl`  | 蓋(互換用) | あり(物理的に回転済み) |
+| `latch-lever.3mf` | レバー(closure=hinge_lever のときのみ) | あり |
+| `latch-lever.stl` | レバー(同上、互換用) | あり |
 
-3MF を推奨。Bambu Studio / PrusaSlicer / OrcaSlicer などで開けば配置済み。
+3MF を推奨。お使いのスライサーで開けば配置済み(3MF 対応スライサーであれば配置・向きが反映される)。
 STL を使う場合も既に印刷向きに回転済みなので、スライサーで再配置不要。
+レバーは独立部品なので、本体・蓋とは別オブジェクト扱い(サポート設定を分けてよい)。
 ```
 
 #### 3.2 印刷向きの根拠
@@ -195,10 +199,11 @@ CAD で解決する原則を守ることで、利用者間で再現性が保た�
 ✓ 最終プリント用ファイルを出力しました:
   - output/print/case-body.stl / .3mf
   - output/print/case-lid.stl  / .3mf
+  - output/print/latch-lever.stl / .3mf  (closure=hinge_lever のときのみ)
   - output/print/slicer-notes.md(スライサー設定推奨)
 
 次のステップ:
-  1. お使いのスライサー(Bambu Studio / PrusaSlicer / Cura)で .3mf を開く
+  1. お使いのスライサー(3MF 対応推奨)で .3mf を開く
   2. slicer-notes.md の推奨設定を反映
   3. プリント開始
 
@@ -216,7 +221,7 @@ CAD で解決する原則を守ることで、利用者間で再現性が保た�
 
 ## 注意事項
 
-- **3MF の優位性**: 3MF は印刷向きをファイルに埋め込めるため、Bambu Studio / PrusaSlicer ではこちらが推奨
+- **3MF の優位性**: 3MF は印刷向きをファイルに埋め込めるため、3MF 対応スライサーではこちらが推奨
 - **STL は予備**: 互換性のため両方出力
 - **試作前提**: プリント後に「合わない」「干渉する」が見つかったら、段階 1 か 4 に戻ってループ(constitution §4)
 - **stl/3mf は git ignore**: `.gitignore`(setup.sh で展開済み)で `output/print/*.stl` `*.3mf` を除外している。バイナリ派生物は履歴に残さない
@@ -225,4 +230,6 @@ CAD で解決する原則を守ることで、利用者間で再現性が保た�
 ## 関連
 
 - `@.claude/skills/review-fix/SKILL.md` — 段階 4、設計確定の前段階
+- `@.claude/skills/fit-check/SKILL.md` — 段階 4-5 橋渡し、❌ なしを確認してから export
+- `@.claude/skills/hinged-lid/SKILL.md` — closure=hinge_lever のとき、本 skill が出力する 3 部品目(レバー)の責任元
 - `@.gitignore` — output/print/ のバイナリは追跡しない(setup.sh で .gitignore.template から展開済み)
