@@ -1,11 +1,13 @@
 ---
 name: design
 description: 段階 2-3 — input/objects/*.yaml と project-config.yaml を統合し、case-spec.yaml(ケース全体仕様)を生成。続いて CadQuery の generator.py と validator.py を出力し、STEP/STL に書き出す。
+when_to_use: 「設計する」「CAD を生成」「ケース全体を組む」「採寸完了→次へ」「generator.py を作って」のとき。case-spec.yaml と generator.py / validator.py を初稿生成する。
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash(.venv/bin/python *), Bash(python *)
 paths:
   - "input/requirements/**/*.yaml"
   - "input/design-params/**/*.yaml"
   - "output/design/**/*.py"
+model: claude-opus-4-7
 ---
 
 # /design — 要件統合と設計生成 skill
@@ -237,17 +239,20 @@ features を追加するときは **対応するパラメータブロックも�
 
 - Claude は `notes` から必要な type を推論
 - 既知 type に雛形関数があれば再利用
-- **新しい type が必要になったら、generator.py に対応関数を追加**
+- **新しい type が必要になったら、generator.py に対応関数を追加して `@register` する**
 - 利用者は段階 4 の feedback で新 type を要求できる(例:「ベルクロループを付けて」)
 
-generator.py の `feature_dispatcher` で type → 実装関数にマッピング:
+正典は `src/case_blueprint/feature_registry.py`(共通基盤)。generator.py は
+そこから `register` / `apply_all` を import し、各 feature 関数に `@register("type")`
+を付与する。**generator.py 内で `FEATURE_HANDLERS = {...}` を直書きしない**(二重実装を避ける):
 
 ```python
-FEATURE_HANDLERS = {
-    "ventilation": apply_ventilation,
-    "cable_port": apply_cable_port,
-    # 新しい type を Claude が必要に応じて追加
-}
+from case_blueprint.feature_registry import register, apply_all
+
+@register("ventilation")
+def apply_ventilation(part, feature, case_config):
+    ...
+    return part
 ```
 
 ## generator.py の雛形構造
@@ -258,6 +263,9 @@ import yaml
 import cadquery as cq
 from pathlib import Path
 
+from case_blueprint.feature_registry import register, apply_all
+from case_blueprint import closures  # closure register の副作用 import
+
 # ----- 設定読み込み -----
 def load_configs(): ...
 
@@ -265,16 +273,19 @@ def load_configs(): ...
 def calculate_internal_dimensions(objects, case_config): ...
 def build_case_body(internal_dims, case_config): ...
 def build_lid(internal_dims, case_config): ...
-def apply_features(body, lid, case_spec, case_config): ...
 
 # ----- 個別 feature 実装(必要に応じて Claude が追加) -----
-def apply_ventilation(part, feature, case_config): ...
-def apply_cable_port(part, feature, case_config): ...
+@register("ventilation")
+def apply_ventilation(part, feature, case_config):
+    ...
+    return part
 
-FEATURE_HANDLERS = {
-    "ventilation": apply_ventilation,
-    "cable_port": apply_cable_port,
-}
+@register("cable_port")
+def apply_cable_port(part, feature, case_config):
+    ...
+    return part
+
+# 新しい type は @register("xxx") で関数を追加するだけで dispatcher に乗る。
 
 # ----- main -----
 def main():
@@ -282,13 +293,26 @@ def main():
     internal = calculate_internal_dimensions(objects, case_config)
     body = build_case_body(internal, case_config)
     lid = build_lid(internal, case_config)
-    body, lid = apply_features(body, lid, case_spec, case_config)
+
+    # closure(本体・蓋・必要に応じてレバー等)
+    method = case_spec["case"]["closure"]["method"]
+    parts = closures.build(method, body, lid, case_spec, case_config)
+    body, lid = parts["case-body"], parts["case-lid"]
+
+    # features を本体・蓋に振り分けて適用(side で分岐)
+    features = case_spec["case"].get("features", [])
+    body = apply_all(body, [f for f in features if f.get("side") not in ("+Z",)], case_config)
+    lid  = apply_all(lid,  [f for f in features if f.get("side") in ("+Z",)], case_config)
 
     Path("output/preview").mkdir(parents=True, exist_ok=True)
     cq.exporters.export(body, "output/preview/case-body.step")
     cq.exporters.export(body, "output/preview/case-body.stl")
     cq.exporters.export(lid,  "output/preview/case-lid.step")
     cq.exporters.export(lid,  "output/preview/case-lid.stl")
+    # closure に第 3 部品があれば(例: hinge_lever のレバー)同様に export
+    if "latch-lever" in parts and parts["latch-lever"] is not None:
+        cq.exporters.export(parts["latch-lever"], "output/preview/latch-lever.step")
+        cq.exporters.export(parts["latch-lever"], "output/preview/latch-lever.stl")
     print("✓ output/preview/ に STEP/STL を出力しました")
 
 if __name__ == "__main__":

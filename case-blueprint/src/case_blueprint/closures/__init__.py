@@ -2,6 +2,8 @@
 
 各 closure module は CLOSURE_HANDLERS にビルダ関数を登録する。
 generator.py は handler を呼んで body / lid / その他部品を組む。
+
+オープン構造: 新 method が必要なら register() で追加するだけ。
 """
 
 from __future__ import annotations
@@ -25,6 +27,21 @@ def register(method: str) -> Callable[[ClosureHandler], ClosureHandler]:
 def build(method: str, body: Any, lid: Any, case_spec: dict, case_config: dict) -> dict[str, Any]:
     handler = CLOSURE_HANDLERS.get(method)
     if handler is None:
-        # 未登録 method はそのまま返す(snap_fit 等の単純な closure は generator.py 側で完結)
+        # 未登録 method はそのまま返す(generator.py 側で完結する場合)
         return {"case-body": body, "case-lid": lid}
     return handler(body, lid, case_spec, case_config)
+
+
+def registered_methods() -> list[str]:
+    """登録済み closure.method 一覧(/lead や validator が使う)。"""
+    return sorted(CLOSURE_HANDLERS.keys())
+
+
+# import 副作用で各 closure module の register() が走る。
+# 利用者プロジェクトで `from case_blueprint import closures` した時点で
+# CLOSURE_HANDLERS が埋まる。
+from . import hinge_lever  # noqa: E402,F401
+from . import snap_fit  # noqa: E402,F401
+from . import screws  # noqa: E402,F401
+from . import magnetic  # noqa: E402,F401
+from . import snap_lip_with_hinge  # noqa: E402,F401
