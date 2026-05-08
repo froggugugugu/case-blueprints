@@ -291,129 +291,137 @@ features を追加するときは **対応するパラメータブロックも�
 `features` 配列の `type` は文字列で **オープン**(enum 固定なし):
 
 - Claude は `notes` から必要な type を推論
-- 既知 type に雛形関数があれば再利用
-- **新しい type が必要になったら、generator.py に対応関数を追加して `@register` する**
+- **既知 type の実装は `src/case_blueprint/features/` に固定済み**:
+  `ventilation` / `cable_port` / `display_window` / `button_cutout` /
+  `mounting_bracket` / `body_text`。`from case_blueprint import features` で
+  自動 register される
+- generator.py は **features を import するだけ**。`@register` 関数を generator.py
+  には書かない(二重実装を避ける)
+- 新しい type が必要なら **`src/case_blueprint/features/<type>.py` を新設して
+  `@register("type")` する** か、当該プロジェクト限定なら generator.py に
+  `@register` で追記する(後者は使い切り、前者は本リポへ還元する形)
 - 利用者は段階 4 の feedback で新 type を要求できる(例:「ベルクロループを付けて」)
 
-正典は `src/case_blueprint/feature_registry.py`(共通基盤)。generator.py は
-そこから `register` / `apply_all` を import し、各 feature 関数に `@register("type")`
-を付与する。**generator.py 内で `FEATURE_HANDLERS = {...}` を直書きしない**(二重実装を避ける):
-
 ```python
-from case_blueprint.feature_registry import register, apply_all
-
-@register("ventilation")
-def apply_ventilation(part, feature, case_config):
-    ...
-    return part
+# generator.py の features 利用は import 1 行で完結
+from case_blueprint import features  # 副作用 import で全 type が register
+from case_blueprint.feature_registry import apply_all
 ```
 
-## generator.py の雛形構造
+## generator.py の雛形構造(src 連動)
+
+`features` / `closures` / `validators` / `fit_check` の本体実装は src 側に
+集約済み。generator.py は **「設定読み込み + 形状の素体作成 + dispatcher 呼び出し
++ export」** の 4 工程に絞って書く。Claude が新規生成するコード量は最小化される。
 
 ```python
 """generator.py — CadQuery でケースを生成。単体実行: python output/design/generator.py"""
-import yaml
-import cadquery as cq
 from pathlib import Path
+import cadquery as cq
 
-from case_blueprint.feature_registry import register, apply_all
-from case_blueprint import closures  # closure register の副作用 import
+from case_blueprint import closures, features, loader  # 副作用 import で register
+from case_blueprint.feature_registry import apply_all
+from case_blueprint.geometry import (
+    internal_bbox_stacked, internal_bbox_side_by_side, external_bbox,
+)
 
-# ----- 設定読み込み -----
-def load_configs(): ...
+del features  # F401 抑制(import 副作用のみ目的)
 
-# ----- 主要関数(L2 で書き換えやすい単位) -----
-def calculate_internal_dimensions(objects, case_config): ...
-def build_case_body(internal_dims, case_config): ...
-def build_lid(internal_dims, case_config): ...
 
-# ----- 個別 feature 実装(必要に応じて Claude が追加) -----
-@register("ventilation")
-def apply_ventilation(part, feature, case_config):
-    ...
-    return part
+def _internal_dims(objects, case_config, layout):
+    arrangement = layout.get("arrangement", "stacked")
+    fn = internal_bbox_stacked if arrangement == "stacked" else internal_bbox_side_by_side
+    return fn(
+        objects,
+        object_clearance=case_config.get("internal", {}).get("object_clearance", 1.0),
+        z_margin=case_config.get("internal", {}).get("z_margin", 0.0),
+    )
 
-@register("cable_port")
-def apply_cable_port(part, feature, case_config):
-    ...
-    return part
 
-# 新しい type は @register("xxx") で関数を追加するだけで dispatcher に乗る。
+def _build_blank_body(internal, walls):
+    """壁付き本体の素体(蓋なし)。closure が後段でリップ・ヒンジを追加する。"""
+    eb = external_bbox(internal, wall_thickness=walls.get("thickness", 2.0))
+    outer = cq.Workplane("XY").box(eb.width, eb.depth, eb.height)
+    inner = (
+        cq.Workplane("XY")
+        .workplane(offset=walls.get("bottom_thickness", walls.get("thickness", 2.0)) / 2)
+        .box(internal.width, internal.depth, internal.height)
+    )
+    return outer.cut(inner)
 
-# ----- main -----
+
+def _build_blank_lid(internal, lid_cfg, walls):
+    """蓋の平板素体。closure 側でリップ等が貼られる。"""
+    eb = external_bbox(internal, wall_thickness=walls.get("thickness", 2.0))
+    return cq.Workplane("XY").box(eb.width, eb.depth, lid_cfg.get("thickness", 2.0))
+
+
 def main():
-    project, case_spec, case_config, objects = load_configs()
-    internal = calculate_internal_dimensions(objects, case_config)
-    body = build_case_body(internal, case_config)
-    lid = build_lid(internal, case_config)
+    cfg = loader.load_all()
+    case_spec, case_config, objects = cfg["case_spec"], cfg["case_config"], cfg["objects"]
 
-    # closure(本体・蓋・必要に応じてレバー等)
+    layout = case_spec["case"].get("layout", {})
+    internal = _internal_dims(objects, case_config, layout)
+    body = _build_blank_body(internal, case_config.get("walls", {}))
+    lid = _build_blank_lid(internal, case_config.get("lid", {}), case_config.get("walls", {}))
+
+    # closure dispatcher(snap_fit / hinge_lever / ...)
     method = case_spec["case"]["closure"]["method"]
     parts = closures.build(method, body, lid, case_spec, case_config)
     body, lid = parts["case-body"], parts["case-lid"]
 
-    # features を本体・蓋に振り分けて適用(side で分岐)
-    features = case_spec["case"].get("features", [])
-    body = apply_all(body, [f for f in features if f.get("side") not in ("+Z",)], case_config)
-    lid  = apply_all(lid,  [f for f in features if f.get("side") in ("+Z",)], case_config)
+    # features を side で本体/蓋に振り分けて適用
+    feats = case_spec["case"].get("features") or []
+    body = apply_all(body, [f for f in feats if f.get("side") not in ("+Z", "top")], case_config)
+    lid = apply_all(lid, [f for f in feats if f.get("side") in ("+Z", "top")], case_config)
 
     Path("output/preview").mkdir(parents=True, exist_ok=True)
-    cq.exporters.export(body, "output/preview/case-body.step")
-    cq.exporters.export(body, "output/preview/case-body.stl")
-    cq.exporters.export(lid,  "output/preview/case-lid.step")
-    cq.exporters.export(lid,  "output/preview/case-lid.stl")
-    # closure に第 3 部品があれば(例: hinge_lever のレバー)同様に export
-    if "latch-lever" in parts and parts["latch-lever"] is not None:
-        cq.exporters.export(parts["latch-lever"], "output/preview/latch-lever.step")
-        cq.exporters.export(parts["latch-lever"], "output/preview/latch-lever.stl")
+    for name, part in [("case-body", body), ("case-lid", lid)] + [
+        (n, p) for n, p in parts.items() if n not in ("case-body", "case-lid") and p is not None
+    ]:
+        cq.exporters.export(part, f"output/preview/{name}.step")
+        cq.exporters.export(part, f"output/preview/{name}.stl")
     print("✓ output/preview/ に STEP/STL を出力しました")
+
 
 if __name__ == "__main__":
     main()
 ```
 
-## validator.py の雛形構造
+利用者プロジェクトでこの雛形を編集する場面は限定的:
+- L2(数値変更): `case-config.yaml` を編集すれば generator.py は触らない
+- L1(構造変更): 新 type の `apply_<type>` を generator.py 末尾に `@register("...")` で追加
+- 共通化したくなったら、それを `src/case_blueprint/features/<type>.py` に昇格
+
+## validator.py の雛形構造(src 連動)
+
+標準チェックは `src/case_blueprint/validators.py` の `@check` / `@warn` で
+登録済み。利用者プロジェクトの validator.py は **shim** として、必要なら
+固有チェックを追加してから `write_report` を呼ぶだけ:
 
 ```python
 """validator.py — 設計の整合性をチェック。単体実行: python output/design/validator.py"""
-import yaml
-from pathlib import Path
+from case_blueprint import loader, validators  # 副作用 import で標準 CHECKS が登録
+from case_blueprint.validators import check, warn, write_report
 
-CHECKS = []
-def check(name):
-    def wrap(fn):
-        CHECKS.append((name, fn))
-        return fn
-    return wrap
 
-@check("外寸 = 内寸 + 壁厚 × 2")
-def check_outer_inner_relation(cfg): ...
+# ----- プロジェクト固有チェック(必要なら追加) -----
+# @check("固有チェック名")
+# def _check_xxx(cfg):
+#     assert ..., "..."
 
-@check("嵌合クリアランスが正の値")
-def check_fit_clearance(cfg): ...
-
-@check("ケースが printer_bed に収まる")
-def check_printer_bed(cfg): ...
-
-@check("オブジェクト同士の干渉なし")
-def check_object_collision(cfg): ...
 
 def main():
-    cfg = load_configs()
-    report = ["# Validation Report\n"]
-    for name, fn in CHECKS:
-        try:
-            fn(cfg)
-            report.append(f"- ✅ {name}")
-        except AssertionError as e:
-            report.append(f"- ❌ {name}: {e}")
+    cfg = loader.load_all()
+    n_fail = write_report(cfg)
+    if n_fail:
+        print(f"❌ {n_fail} 件の fail")
+        return 1
+    return 0
 
-    Path("output/reports").mkdir(parents=True, exist_ok=True)
-    Path("output/reports/validation.md").write_text("\n".join(report))
-    print("✓ output/reports/validation.md を出力しました")
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
 ```
 
 ## ゲート

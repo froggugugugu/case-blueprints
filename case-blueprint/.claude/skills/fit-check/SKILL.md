@@ -139,10 +139,72 @@ ALLOWLIST の合計を超える分が「未許容の干渉」として ❌ 扱�
 
 ## 処理フロー
 
-### Step 1: fit_check.py の準備
+### Step 1: fit_check.py(shim)の準備
 
-`output/design/fit_check.py` が存在しなければテンプレートから生成。
-存在すれば skip(利用者カスタマイズを尊重)。新規チェック項目を追加する場合は `PART_PAIRS` / `MECHANISMS` / `ALLOWLIST` に追記する形で拡張する。
+本体ロジックは `src/case_blueprint/fit_check.py` に集約済み。利用者プロジェクトの
+`output/design/fit_check.py` は **薄い shim** として、ALLOWLIST と generator が
+組んだ parts を渡して `main()` を呼ぶだけにする:
+
+```python
+"""fit_check.py — src/case_blueprint.fit_check の shim。
+
+本ファイルでカスタマイズするのは ALLOWLIST(意図的な微小重なりの登録)と
+プロジェクト固有チェッカーのみ。MECHANISMS の登録は @register_mechanism で。
+"""
+from case_blueprint import fit_check, loader, closures, features  # noqa: F401
+
+# ----- ALLOWLIST(明示許容のみ。理由を必ず併記、P16)-----
+ALLOWLIST = [
+    # {"label": "本体ナックル右半円×蓋プレート -Y 端",
+    #  "max_mm3": 50.0,
+    #  "where": "蝶番付近、構造上避けられない 1mm 帯"},
+]
+
+
+# ----- プロジェクト固有チェッカー(必要なら追加)-----
+# @fit_check.checker("F. プロジェクト固有")
+# def _check_xxx(cfg): ...
+
+
+def _build_parts(cfg):
+    """generator.py と同じ手順でパーツを再構築して dict で返す。
+    CAD 干渉解析(D)に渡す。"""
+    import cadquery as cq
+    from case_blueprint.geometry import (
+        internal_bbox_stacked, internal_bbox_side_by_side, external_bbox,
+    )
+    case_spec, case_config, objects = cfg["case_spec"], cfg["case_config"], cfg["objects"]
+    layout = case_spec["case"].get("layout", {})
+    arrangement = layout.get("arrangement", "stacked")
+    fn = internal_bbox_stacked if arrangement == "stacked" else internal_bbox_side_by_side
+    internal = fn(
+        objects,
+        object_clearance=case_config.get("internal", {}).get("object_clearance", 1.0),
+        z_margin=case_config.get("internal", {}).get("z_margin", 0.0),
+    )
+    walls = case_config.get("walls", {})
+    eb = external_bbox(internal, wall_thickness=walls.get("thickness", 2.0))
+    body = cq.Workplane("XY").box(eb.width, eb.depth, eb.height).cut(
+        cq.Workplane("XY").box(internal.width, internal.depth, internal.height)
+    )
+    lid = cq.Workplane("XY").box(eb.width, eb.depth, case_config.get("lid", {}).get("thickness", 2.0))
+    method = case_spec["case"]["closure"]["method"]
+    parts = closures.build(method, body, lid, case_spec, case_config)
+    return parts
+
+
+if __name__ == "__main__":
+    cfg = loader.load_all()
+    parts = None
+    try:
+        parts = _build_parts(cfg)
+    except Exception as e:
+        print(f"⚠ パーツ再構築に失敗、CAD 干渉解析をスキップ: {e}")
+    raise SystemExit(fit_check.main(cfg=cfg, parts=parts, allowlist=ALLOWLIST))
+```
+
+shim が無ければ skill が初回生成。**既に存在する shim は上書きしない**
+(ALLOWLIST など利用者編集を尊重)。
 
 ### Step 2: チェック実行
 
