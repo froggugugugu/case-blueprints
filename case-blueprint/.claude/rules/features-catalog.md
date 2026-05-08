@@ -84,15 +84,45 @@ features:
     tip_fillet_radius: 4.0
 ```
 
+## src 側に実装済みの type(2026-05 時点)
+
+以下は `src/case_blueprint/features/` に **本体実装が固定** されている。
+generator.py は `from case_blueprint import features` するだけで自動 register。
+
+| type | 実装ファイル | 主な拡張ポイント |
+|---|---|---|
+| `ventilation` | `features/ventilation.py` | grid / slots / honeycomb |
+| `cable_port` | `features/cable_port.py` | flange(防水パッキン用)を内蔵 |
+| `display_window` | `features/display_window.py` | bezel(段差)で IPS パネル保持 |
+| `button_cutout` | `features/button_cutout.py` | `gloves_compatible` で手袋越し下限ガード |
+| `mounting_bracket` | `features/mounting_bracket.py` | `style: ribs / m5_screw_holes / ram_ball_b` |
+| `body_text` | `features/body_text.py` | フォントは `input/fonts/` にローカル配置 |
+
+これら以外は **未実装**。利用者プロジェクト固有の type は generator.py 末尾で
+`@register("<type>")` する形で使い切る。汎用化したくなったら src/features/
+に昇格させる。
+
 ## 新しい type を追加するとき
 
-1. `generator.py` に `@register("<type>")` を付けた `apply_<type>(part, feature, case_config)` を実装
-2. `case-config.yaml` に必要なら type と同名のパラメータブロックを追加(慣習)
-3. 本カタログに行を追加
-4. `validator.py` に該当チェック関数を `@check` で追加(寸法・配置の妥当性)
+### A. 利用者プロジェクト限定(使い切り)
+
+1. `output/design/generator.py` 末尾に `@register("<type>")` を付けた
+   `apply_<type>(part, feature, case_config)` を実装
+2. `case-config.yaml` に必要なら type と同名のパラメータブロックを追加
+3. 本リポへ還元しない場合は本カタログ更新不要
+
+### B. 共通化して本リポに還元
+
+1. `src/case_blueprint/features/<type>.py` を新設
+2. `validate_<type>(feature, case_config)` と `@register("<type>") def apply_<type>(...)` を実装
+3. `features/__init__.py` の末尾に `from . import <type>` を追加
+4. `tests/test_features.py` に validate / geometry テストを追加
+5. 本カタログに行を追加(主要パラメータと推奨値)
 
 ## 関連
 
 - `@.claude/skills/design/SKILL.md` — features 推論と generator.py 雛形
 - `@.claude/skills/review-fix/SKILL.md` — 段階 4 で type 追加・置換
 - `@schemas/case-spec.schema.yaml` — features は additionalProperties: true
+- `@src/case_blueprint/features/` — 実装本体
+- `@src/case_blueprint/feature_registry.py` — `register` / `apply_all` の機構

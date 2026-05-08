@@ -32,6 +32,30 @@
 | `magnet_d10_t2` | ネオジム N52 φ10 × t2 | SS400 t1.0 φ18 |
 | `mag_to_mag` | 同上 + 蓋側にも磁石(両側磁石) | — |
 
+### 外部マウント系(`mounting_bracket` feature の `style` で参照)
+
+バイク/車載/三脚等への外部固定用。`feature.type = mounting_bracket` の
+`style` と対応するハードウェアセットを定義する。
+
+| preset | 用途 | ボール径 | ねじ規格 | PCD |
+|---|---|---|---|---|
+| `mount_ram_ball_b` | RAM ボール B サイズ(汎用バイク・電子機器) | 1 inch (25.4 mm) | M5 × 4 点 | 38.1 mm |
+| `mount_ram_ball_d` | RAM ボール D サイズ(大型機器) | 2.25 inch (57.2 mm) | M6 × 4 点 | 50.0 mm |
+| `mount_gopro_3prong` | GoPro 規格 3 ツメ式 | — | M5 軸ねじ × 1 | — |
+| `mount_quarter_inch` | 1/4-20 UNC(三脚 / カメラリグ) | — | 1/4-20 UNC × 1 | — |
+| `mount_panel_4_corner` | パネル 4 隅 M3 取付 | — | M3 × 4 点 | プロジェクト依存 |
+
+### 振動対策(車載・バイク等)
+
+| preset | 用途 | 内容 |
+|---|---|---|
+| `heatset_m3_brass` | 振動環境のねじ締結 | M3 真鍮 heat-set インサート(5.0 × L 4.0 / 5.0 / 6.0)|
+| `heatset_m4_brass` | 同上 M4 | M4 真鍮 heat-set インサート(6.0 × L 5.0 / 6.0 / 8.0)|
+| `m5_lock_assembly` | RAM ベース等の M5 締結 | M5 ねじ + 平ワッシャ + スプリングワッシャ + ナット |
+
+heat-set 系プリセットは **PETG / ABS** を前提にした寸法。PLA/PLA+ では
+熱で穴が広がりやすいので推奨しない(P19 参照)。
+
 ## プリセットの YAML 例
 
 ### `m2_long`(ヒンジ蓋デフォルト)
@@ -96,6 +120,49 @@ hardware:
       outer_diameter: 12.0
 ```
 
+### `mount_ram_ball_b`(RAM ボール B サイズ・バイクナビ標準)
+
+```yaml
+hardware:
+  preset: mount_ram_ball_b
+  mount:
+    ball:
+      type: ram_ball
+      size: B                           # 1 inch (25.4 mm) 球
+      diameter: 25.4
+    base:
+      pcd: 38.1                         # 4 点ねじ取付ピッチ円直径
+      screw:
+        nominal: M5
+        diameter: 5.0
+        length: 12.0                    # 12 / 16 / 20 のいずれか
+      washer: spring_washer_m5          # ロックワッシャ前提(P19)
+      nut: nyloc_m5                     # 緩み止めナット(あれば)
+    locking_compound: medium            # ロックタイト中強度推奨(利用者作業)
+```
+
+`mounting_bracket` feature の `style: ram_ball_b` と組み合わせると、本体 -Z
+面に円盤ベース + 4 点 M5 PCD 38.1mm を自動配置する。
+
+### `heatset_m3_brass`(振動環境用 M3 真鍮 heat-set)
+
+```yaml
+hardware:
+  preset: heatset_m3_brass
+  closure:
+    fastener:
+      type: heatset_insert
+      nominal: M3
+      diameter: 3.0
+      insert_outer_diameter: 5.0      # 圧入穴径基準
+      insert_length: 6.0              # 4 / 5 / 6 mm
+      length: 8.0                     # ねじ自体の長さ
+      engagement: heatset_thread
+  notes:
+    install: ハンダごて 250-280℃ で圧入(PETG 推奨、PLA は熱変形)
+    torque_max_nm: 0.5                # 真鍮インサートの限界
+```
+
 ## 新しいプリセットを追加するとき
 
 1. **物理的な同定** が可能な命名(規格 + 主要寸法)を選ぶ。`big_screws` のような曖昧名は禁止
@@ -107,4 +174,6 @@ hardware:
 
 - `@.claude/skills/hinged-lid/SKILL.md` — ヒンジ蓋プリセット運用
 - `@.claude/rules/closures-catalog.md` — closure.method との対応
-- `@.claude/pitfalls.md` — P17 ピン長制約
+- `@.claude/rules/features-catalog.md` — `mounting_bracket` feature の style
+- `@.claude/pitfalls.md` — P17 ピン長制約 / P18 防水 / P19 振動緩み / P20 熱変形
+- `@src/case_blueprint/features/mounting_bracket.py` — `mount_ram_ball_b` 等の実装本体
