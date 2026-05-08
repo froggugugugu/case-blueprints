@@ -123,6 +123,14 @@ def _check_printer_bed(cfg: dict) -> None:
             object_clearance=internal.get("object_clearance", 1.0),
             z_margin=internal.get("z_margin", 0.0),
         )
+    elif arrangement == "manual":
+        from .geometry import internal_bbox_manual
+        placements = cfg["case_spec"]["case"].get("objects") or cfg["case_spec"].get("objects", [])
+        ib = internal_bbox_manual(
+            objects, placements,
+            object_clearance=internal.get("object_clearance", 1.0),
+            z_margin=internal.get("z_margin", 0.0),
+        )
     else:
         from .geometry import internal_bbox_side_by_side
         ib = internal_bbox_side_by_side(
@@ -134,6 +142,22 @@ def _check_printer_bed(cfg: dict) -> None:
     eb = external_bbox(ib, wall_thickness=walls.get("thickness", 2.0))
     bed = cfg["project"]["print_settings"]["printer_bed"]
     assert fits_in_bed(eb, bed), f"外寸 {eb} が bed {bed} に収まらない"
+
+
+@check("オブジェクト同士の AABB 干渉なし")
+def _check_object_collisions(cfg: dict) -> None:
+    """layout=manual のとき、objects[].position から AABB 干渉を検出。"""
+    arrangement = cfg["case_spec"]["case"].get("layout", {}).get("arrangement", "stacked")
+    if arrangement != "manual":
+        return  # stacked / side_by_side は generator が並べる前提
+    from .geometry import detect_collisions
+    objects = cfg.get("objects", [])
+    placements = cfg["case_spec"].get("objects", [])
+    pairs = detect_collisions(objects, placements)
+    assert not pairs, (
+        f"objects 同士の AABB が重なる: {pairs}。"
+        f"position を見直すか case-spec.objects[].position を調整してください"
+    )
 
 
 @check("外寸 = 内寸 + 壁厚 × 2 の関係が成立")

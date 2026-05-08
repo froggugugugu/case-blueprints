@@ -58,7 +58,7 @@ properties:
         type: object
         additionalProperties: false
         properties:
-          arrangement: { enum: [stacked, side_by_side] }
+          arrangement: { enum: [stacked, side_by_side, manual] }
           orientation: { enum: [horizontal, vertical] }
           notes:       { type: [string, "null"] }
 

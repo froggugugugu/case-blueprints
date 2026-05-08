@@ -224,11 +224,28 @@ def _check_features_overlap(cfg: dict) -> list[Issue]:
     return out
 
 
+@checker("D. objects 干渉")
+def _check_object_collisions(cfg: dict) -> list[Issue]:
+    """layout=manual のとき objects 同士の AABB 重なりを検出。"""
+    arrangement = cfg["case_spec"]["case"].get("layout", {}).get("arrangement", "stacked")
+    if arrangement != "manual":
+        return []
+    from .geometry import detect_collisions
+    objects = cfg.get("objects", [])
+    placements = cfg["case_spec"].get("objects", [])
+    pairs = detect_collisions(objects, placements)
+    if pairs:
+        return [Issue("D", "fail",
+                      f"objects 同士の AABB 干渉: {pairs}")]
+    return [Issue("D", "pass", f"objects 同士の AABB 干渉なし({len(placements)} 個)")]
+
+
 @checker("E. 印刷可能性")
 def _check_print_feasibility(cfg: dict) -> list[Issue]:
     """printer_bed に外寸が収まるか / 壁厚 / orientation の存在。"""
     from .geometry import (
-        external_bbox, internal_bbox_stacked, internal_bbox_side_by_side, fits_in_bed,
+        external_bbox, internal_bbox_stacked, internal_bbox_side_by_side,
+        internal_bbox_manual, fits_in_bed,
     )
 
     out: list[Issue] = []
@@ -249,6 +266,17 @@ def _check_print_feasibility(cfg: dict) -> list[Issue]:
             object_clearance=internal.get("object_clearance", 1.0),
             z_margin=internal.get("z_margin", 0.0),
         )
+    elif arrangement == "manual":
+        placements = cfg["case_spec"].get("objects", [])
+        try:
+            ib = internal_bbox_manual(
+                objects, placements,
+                object_clearance=internal.get("object_clearance", 1.0),
+                z_margin=internal.get("z_margin", 0.0),
+            )
+        except ValueError as e:
+            out.append(Issue("E", "fail", f"layout=manual の内寸計算失敗: {e}"))
+            return out
     else:
         ib = internal_bbox_side_by_side(
             objects,

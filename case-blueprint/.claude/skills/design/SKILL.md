@@ -80,8 +80,11 @@ model: claude-opus-4-7
 ### Step 3: レイアウト方針の確認(AskUserQuestion)
 
 - 質問 1: 「オブジェクトの配置はどうしますか?」
-  - 選択肢: `stacked`(縦積み) / `side_by_side`(横並び)
-  - **`auto` は廃止**: Claude が文脈から推奨を 1 つ提示し、利用者が承認する形に統一(自由記述で別案を出すのは可)
+  - 選択肢: `stacked`(縦積み) / `side_by_side`(横並び) / `manual`(3D 配置)
+  - **`auto` は廃止**: Claude が文脈から推奨を 1 つ提示し、利用者が承認する形に統一
+  - `manual` は **複数 objects を 3D で配置** したい場合に選ぶ。
+    `case-spec.objects[].position[x,y,z]` を直接指定し、`internal_bbox_manual()`
+    が AABB 集約で内寸を逆算。`detect_collisions()` が AABB 干渉を検出する
 - 質問 2: 「ケース type は?」
   - 選択肢: `lidded_box`(フタ付き箱、デフォルト)/ `custom`(notes に記載 → 段階 4 で詰める)
 
@@ -192,7 +195,7 @@ case:
     enabled: false                      # printer_bed に収まらない場合 true
     plane: horizontal                   # horizontal / vertical
   layout:
-    arrangement: stacked                # stacked / side_by_side
+    arrangement: stacked                # stacked / side_by_side / manual(3D 配置、objects[].position 必須)
     orientation: horizontal             # horizontal / vertical
     notes: |                            # 自由記述。持ち方・ポート向き・ケーブル取り回し・内寸目標等
       持ち方: 縦持ち、長軸 X が垂直。+X 端が上(蓋)、-X 端が下(底)。

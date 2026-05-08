@@ -196,6 +196,68 @@ class TestFeaturesBboxOverlap:
         assert bb == (-6.0, 6.0, -2.0, 2.0)
 
 
+def test_run_objects_collision_manual_layout():
+    """layout=manual で objects が重なっているとき D カテゴリで fail"""
+    cfg = {
+        "project": {"name": "x",
+                    "print_settings": {"printer_bed": [200, 200, 200],
+                                       "default_material": "pla"},
+                    "design_rules": {"min_wall_thickness": 1.6}},
+        "case_spec": {"case": {
+            "closure": {"method": "snap_fit"},
+            "layout": {"arrangement": "manual"},
+            "print_orientation": {"body": "x", "lid": "y"},
+            "features": [],
+        }, "objects": [
+            {"id": "a", "position": [0, 0, 0]},
+            {"id": "b", "position": [3, 0, 0]},  # 半分重なる
+        ]},
+        "case_config": {"walls": {"thickness": 2.4},
+                        "lid": {"fit_clearance": 0.25},
+                        "internal": {"object_clearance": 1.0}},
+        "objects": [
+            {"id": "a", "shape": "rectangular",
+             "dimensions": {"width": 10, "depth": 10, "height": 10}, "tolerance": 0},
+            {"id": "b", "shape": "rectangular",
+             "dimensions": {"width": 10, "depth": 10, "height": 10}, "tolerance": 0},
+        ],
+    }
+    rep = run_all(cfg)
+    assert any(i.category == "D" and i.level == "fail" and "objects" in i.message
+               for i in rep.issues)
+
+
+def test_run_objects_no_collision_manual_layout():
+    """layout=manual で十分離れていれば pass"""
+    cfg = {
+        "project": {"name": "x",
+                    "print_settings": {"printer_bed": [200, 200, 200],
+                                       "default_material": "pla"},
+                    "design_rules": {"min_wall_thickness": 1.6}},
+        "case_spec": {"case": {
+            "closure": {"method": "snap_fit"},
+            "layout": {"arrangement": "manual"},
+            "print_orientation": {"body": "x", "lid": "y"},
+            "features": [],
+        }, "objects": [
+            {"id": "a", "position": [0, 0, 0]},
+            {"id": "b", "position": [20, 0, 0]},
+        ]},
+        "case_config": {"walls": {"thickness": 2.4},
+                        "lid": {"fit_clearance": 0.25},
+                        "internal": {"object_clearance": 1.0}},
+        "objects": [
+            {"id": "a", "shape": "rectangular",
+             "dimensions": {"width": 10, "depth": 10, "height": 10}, "tolerance": 0},
+            {"id": "b", "shape": "rectangular",
+             "dimensions": {"width": 10, "depth": 10, "height": 10}, "tolerance": 0},
+        ],
+    }
+    rep = run_all(cfg)
+    assert any(i.category == "D" and i.level == "pass" and "objects" in i.message
+               for i in rep.issues)
+
+
 def test_run_features_overlap_detected():
     cfg = {
         "project": {"name": "x",
