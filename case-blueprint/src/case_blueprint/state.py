@@ -110,6 +110,58 @@ def snapshot(root: str | os.PathLike[str] = ".") -> dict[str, Any]:
     }
 
 
+def _count_marks(path: Path) -> tuple[int, int] | None:
+    """md レポートの ✅/❌ をカウント。無ければ None。"""
+    if not path.exists():
+        return None
+    try:
+        text = path.read_text(encoding="utf-8")
+    except Exception:
+        return None
+    return text.count("✅"), text.count("❌")
+
+
+def summary_line(root: str | os.PathLike[str] = ".") -> str:
+    """statusline 向け 1 行サマリ。「いまどの段階・どこに ❌ があるか」を端的に返す。"""
+    r = Path(root)
+    snap = snapshot(r)
+
+    has_print = bool(snap["stage_5_export"]["print_files"])
+    has_gen = snap["stage_3_design"]["generator_exists"]
+    spec_exists = snap["stage_2_requirements"]["case_spec_exists"]
+    objects_n = snap["stage_1_measure"]["objects_count"]
+
+    val_status = _count_marks(r / "output/reports/validation.md")
+    fit_status = _count_marks(r / "output/reports/fit-check.md")
+
+    if has_print:
+        stage = "5:export"
+    elif fit_status and fit_status[1] == 0 and val_status and val_status[1] == 0:
+        stage = "4-5:fit ✓"
+    elif has_gen:
+        stage = "3:design"
+    elif spec_exists:
+        stage = "2:spec"
+    elif objects_n > 0:
+        stage = "1:measure"
+    else:
+        stage = "0:start"
+
+    parts: list[str] = [f"📐 {stage}"]
+    if objects_n:
+        parts.append(f"obj:{objects_n}")
+    if val_status:
+        p, f = val_status
+        parts.append(f"val:❌{f}" if f else f"val:✓{p}")
+    if fit_status:
+        p, f = fit_status
+        parts.append(f"fit:❌{f}" if f else "fit:✓")
+    closure = snap["stage_2_requirements"]["closure_method"]
+    if closure:
+        parts.append(f"closure:{closure}")
+    return " | ".join(parts)
+
+
 def main() -> int:
     json.dump(snapshot("."), sys.stdout, ensure_ascii=False, indent=2)
     sys.stdout.write("\n")

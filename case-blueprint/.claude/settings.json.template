@@ -36,7 +36,8 @@
       "Bash(rm -rf *)",
       "Bash(curl *)",
       "WebFetch"
-    ]
+    ],
+    "additional-directories": []
   },
 
   "hooks": {
@@ -47,6 +48,17 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-tool-guard.sh"
           }
         ]
       }
@@ -62,6 +74,16 @@
         ]
       }
     ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/subagent-stop.sh"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -71,7 +93,22 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-end.sh"
+          }
+        ]
+      }
     ]
+  },
+
+  "statusLine": {
+    "type": "command",
+    "command": "bash .claude/hooks/statusline.sh"
   },
 
   "includeCoAuthoredBy": true

@@ -3,6 +3,7 @@
 サブコマンド:
   validate-schema <yaml-path>  -- スキーマ検証
   state                          -- /lead 用の状態 JSON 出力
+  summary                        -- statusline 向け 1 行サマリ
   load-all [<root>]              -- 4 種一括ロードして dict ダンプ(デバッグ用)
 """
 
@@ -58,9 +59,17 @@ def _validate_schema(args: list[str]) -> int:
 
 
 def _state(args: list[str]) -> int:
+    del args
     from . import state as state_mod
     json.dump(state_mod.snapshot("."), sys.stdout, ensure_ascii=False, indent=2)
     sys.stdout.write("\n")
+    return 0
+
+
+def _summary(args: list[str]) -> int:
+    del args
+    from . import state as state_mod
+    sys.stdout.write(state_mod.summary_line(".") + "\n")
     return 0
 
 
@@ -88,6 +97,7 @@ def _load_all(args: list[str]) -> int:
 COMMANDS = {
     "validate-schema": _validate_schema,
     "state": _state,
+    "summary": _summary,
     "load-all": _load_all,
 }
 
