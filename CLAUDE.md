@@ -18,11 +18,21 @@ case-blueprints/
 ├── CLAUDE.md                             # 本ファイル
 ├── constitution.md                       # 5 不変原則(変更プロトコル付き)
 ├── case-blueprint/                       # ★ テンプレート本体(setup.sh コピー対象)
-│   ├── README.md / setup.sh / project-config.yaml.template
+│   ├── README.md / setup.sh
+│   ├── CLAUDE.md.template / project-config.yaml.template / pyproject.toml.template / .gitignore.template
 │   ├── input/{objects, requirements, design-params, feedback}/
 │   ├── output/{design, preview, print, reports}/
-│   ├── src/<pkg>/  tests/  schemas/
-│   └── .claude/{skills/, pitfalls.md, quality-gates.md}
+│   ├── schemas/  — JSON-Schema(object / case-spec / case-config / project-config)
+│   ├── src/case_blueprint/{loader,geometry,exporter,feature_registry,validators,state,cli,closures/}
+│   ├── tests/  — pytest smoke
+│   └── .claude/
+│       ├── settings.json.template      — permissions + hooks
+│       ├── skills/{lead, measure, design, review-fix, fit-check, export, hinged-lid}/
+│       ├── agents/{cad-validator, slicer-advisor}.md
+│       ├── rules/{constitution, cad-conventions, yaml-style, print-safety}.md
+│       ├── hooks/{session-start, post-edit-validate, stop-gate}.sh
+│       ├── pitfalls.md
+│       └── quality-gates.md
 ├── docs/{philosophy, schemas}/           # 思想・解説(リポ専用、コピー対象外)
 ├── examples/                             # 完成例ショーケース(リポ専用)
 ├── snippets/                             # レシピ集(将来予約、空)

@@ -1,0 +1,26 @@
+case:
+  name: minimal-case
+  type: lidded_box
+  closure:
+    method: snap_fit
+    lid_axis: "+Z"
+  print_orientation:
+    body: bottom_down
+    lid: top_down
+  layout:
+    arrangement: stacked
+    orientation: horizontal
+    notes: |
+      最小例。1 オブジェクトを直置き、+Z 面に蓋。
+      ventilation feature で天面に通気孔を入れる。
+  features:
+    - type: ventilation
+      side: top
+      pattern: grid
+      density: 0.3
+
+objects:
+  - id: sample-device
+    position: [0, 0, 0]
+    rotation: 0
+    note: 内寸ボックスの -X/-Y/-Z 角を原点として配置

@@ -1,6 +1,8 @@
 ---
 name: hinged-lid
 description: ヒンジ蓋ケース特化スキル(機構特化・横断)— 軸ピン+レバー式ラッチの3部品構成(本体/蓋/レバー)。M2 ピン+ねじの長尺セットをデフォルトに、`hardware:` プリセット差替えで幅狭ラッチ・別径構成にも転用可。`/design` 確定後の closure 詳細を埋める。
+allowed-tools: Read, Write, Edit, Glob, Bash(.venv/bin/python *), Bash(python *)
+argument-hint: "[init|scale|latch|hardware] [<args>]"
 ---
 
 # /hinged-lid — ヒンジ蓋ケース特化スキル

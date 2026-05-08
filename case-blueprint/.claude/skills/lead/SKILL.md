@@ -1,6 +1,7 @@
 ---
 name: lead
 description: ケース設計プロジェクトを進行するプロジェクトリード(PdM 相当)。5 段階ワークフロー(measure / design / review-fix / fit-check / export)+ 機構特化の横断スキル(hinged-lid)を統合し、現状把握 → 次の一手の提示 → skill 起動 を反復する。利用者の意図を都度確認し、方針転換を柔軟に受け入れる。
+allowed-tools: Read, Glob, Bash(.venv/bin/python -m case_blueprint.state), Bash(test *), Bash(ls *), Bash(stat *)
 ---
 
 # /lead — プロジェクトリード(PdM 相当)

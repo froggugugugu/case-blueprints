@@ -1,0 +1,13 @@
+id: sample-device
+name: サンプルデバイス
+shape: rectangular
+front_face: connector_side
+dimensions:
+  width: 80.0
+  depth: 50.0
+  height: 20.0
+tolerance: 0.5
+notes: |
+  サンプル用の直方体デバイス。
+  正面に USB-C × 1、LED × 1 を想定。
+  通気のため天面にベンチレーション feature を入れる。

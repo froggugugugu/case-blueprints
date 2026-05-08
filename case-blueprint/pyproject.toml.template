@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "cadquery>=2.4",
     "pyyaml>=6.0",
+    "jsonschema>=4.21",
 ]
 
 [project.optional-dependencies]
@@ -14,12 +15,18 @@ dev = [
     "ruff>=0.5",
 ]
 
+[project.scripts]
+case-blueprint = "case_blueprint.cli:main"
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = []
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.ruff]
 line-length = 100
@@ -27,3 +34,4 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-ra"

@@ -63,6 +63,11 @@ cp -R "$SCRIPT_DIR/." "$TARGET/"
 # Remove setup.sh itself from target (template should not include the installer)
 rm -f "$TARGET/setup.sh"
 
+# Strip Python build artifacts that may have been generated during testing
+find "$TARGET" -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
+find "$TARGET" -type d -name '.pytest_cache' -exec rm -rf {} + 2>/dev/null || true
+find "$TARGET" -type d -name '.ruff_cache' -exec rm -rf {} + 2>/dev/null || true
+
 # Restore LICENSE if it was preserved
 if [[ -n "$LICENSE_BACKUP" ]]; then
     mv "$LICENSE_BACKUP" "$TARGET/LICENSE"
@@ -80,8 +85,14 @@ cat <<EOF
 
 次のステップ:
   cd $TARGET
-  \$EDITOR project-config.yaml          # プリンタ機種・材料を記入
-  python -m venv .venv && source .venv/bin/activate
-  pip install -e ".[dev]"               # cadquery + pytest + ruff
-  claude                                 # → /measure オブジェクトを採寸
+  \$EDITOR project-config.yaml             # プリンタ機種・材料を記入
+  python3.11 -m venv .venv && source .venv/bin/activate
+  pip install -e ".[dev]"                  # cadquery + pyyaml + jsonschema + pytest + ruff
+  pytest                                    # smoke test(共通実装の動作確認)
+  claude                                    # → /lead で進行管理を始める
+
+ヒント:
+  - /lead から始めると現在地と次の一手を提示してもらえます
+  - 直接 skill を呼ぶ場合: /measure → /design → /review-fix → /fit-check → /export
+  - ヒンジ蓋ケースは /hinged-lid init を併用
 EOF

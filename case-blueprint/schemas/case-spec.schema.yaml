@@ -1,0 +1,99 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://case-blueprints/schemas/case-spec.schema.yaml"
+title: CaseSpec
+description: |
+  ケース全体の構造仕様(ハイブリッドゾーン)。
+  /design skill が初稿を生成し、利用者が直接編集できる(constitution §1)。
+
+type: object
+required: [case, objects]
+additionalProperties: false
+
+properties:
+  case:
+    type: object
+    required: [name, type, closure, print_orientation, layout]
+    additionalProperties: false
+    properties:
+      name:
+        type: string
+        pattern: "^[a-z0-9][a-z0-9-]*$"
+        description: ケース名(英数字+ハイフン)
+
+      type:
+        enum: [lidded_box, hinged_box, split_shell]
+        description: ケースの基本構造
+
+      closure:
+        type: object
+        required: [method]
+        additionalProperties: true   # 複合 method のサブ構造を許可
+        properties:
+          method:
+            type: string
+            description: |
+              snap_fit / screws / magnetic(単純)、
+              snap_lip_with_hinge / snap_lip_with_screws(複合)、
+              hinge_lever(/hinged-lid 専用)、
+              新規 method を Claude が必要に応じて追加可能(オープン)
+          lid_axis:
+            enum: ["+X", "-X", "+Y", "-Y", "+Z", "-Z"]
+            description: 蓋がどの面か
+
+      print_orientation:
+        type: object
+        additionalProperties: false
+        properties:
+          body: { type: string, description: "印刷時の向き(例: bottom_down)" }
+          lid:  { type: string }
+
+      split:
+        type: object
+        additionalProperties: false
+        properties:
+          enabled: { type: boolean }
+          plane:   { enum: [horizontal, vertical] }
+
+      layout:
+        type: object
+        additionalProperties: false
+        properties:
+          arrangement: { enum: [stacked, side_by_side, auto] }
+          orientation: { enum: [horizontal, vertical] }
+          notes:       { type: [string, "null"] }
+
+      features:
+        type: array
+        description: |
+          オープン構造。type は文字列で固定 enum なし。
+          Claude が notes から推論し、必要に応じて新規 type を追加する
+        items:
+          type: object
+          required: [type]
+          properties:
+            type: { type: string, minLength: 1 }
+          additionalProperties: true
+
+  objects:
+    type: array
+    minItems: 1
+    description: /measure で採寸した全オブジェクトの配置情報
+    items:
+      type: object
+      required: [id, position]
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+          pattern: "^[a-z0-9][a-z0-9-]*$"
+        position:
+          type: array
+          items: { type: number }
+          minItems: 3
+          maxItems: 3
+          description: ケース内座標 [x, y, z] (mm)。内寸ボックスの -X/-Y/-Z 角を原点
+        rotation:
+          type: number
+          description: Z 軸回りの回転 (度)
+        note:
+          type: [string, "null"]

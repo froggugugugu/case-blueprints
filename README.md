@@ -60,12 +60,12 @@
 実際に作ったプロジェクトの学びをテンプレートに還元する仕組みがあります:
 
 ```
-[my-gps-logger-case/]               ← setup.sh で生成した実プロジェクト
+[my-real-project/]                                  ← setup.sh で生成した実プロジェクト
        ↓ 丸ごとコピー
-[case-blueprints/feedback-staging/gps-logger-case/]   ← Git 追跡外、個人情報 OK
+[case-blueprints/feedback-staging/<project-name>/]  ← Git 追跡外、個人情報 OK
        ↓ Claude が分析
-[case-blueprints/case-blueprint/]   ← skill / テンプレートを改善
-[case-blueprints/examples/gps-logger-case/]   ← 学びを整形して保存
+[case-blueprints/case-blueprint/]                   ← skill / テンプレートを改善
+[case-blueprints/examples/<project-name>/]          ← 学びを整形して保存(例: examples/minimal/)
 ```
 
 詳細は [`feedback-staging/README.md`](feedback-staging/README.md) を参照。

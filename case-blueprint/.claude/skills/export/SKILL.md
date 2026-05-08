@@ -1,6 +1,9 @@
 ---
 name: export
 description: 段階 5 — 確定済みの設計から最終プリント用 STL/3MF を出力し、スライサー設定の推奨を slicer-notes.md に記述する。
+allowed-tools: Read, Write, Edit, Glob, Bash(.venv/bin/python *), Bash(python *), Bash(shasum *), Bash(md5sum *)
+paths:
+  - "output/print/**"
 ---
 
 # /export — プリント出力 skill

@@ -1,0 +1,75 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://case-blueprints/schemas/case-config.schema.yaml"
+title: CaseConfig
+description: |
+  寸法パラメータ(L2 主要編集対象)。利用者が直接編集する前提。
+  features の type と一致するキー名で固有パラメータブロックを追加できる(オープン)。
+
+type: object
+additionalProperties: true   # オープン構造: feature 別ブロックを許容
+
+properties:
+  walls:
+    type: object
+    additionalProperties: false
+    properties:
+      thickness:        { type: number, exclusiveMinimum: 0 }
+      bottom_thickness: { type: number, exclusiveMinimum: 0 }
+
+  lid:
+    type: object
+    additionalProperties: true
+    properties:
+      thickness:                       { type: number, exclusiveMinimum: 0 }
+      fit_clearance:                   { type: number, minimum: 0 }
+      lip_height:                      { type: number, minimum: 0 }
+      axis:                            { enum: ["+X", "-X", "+Y", "-Y", "+Z", "-Z"] }
+      lip_hinge_side_extra_clearance:  { type: number, minimum: 0 }
+      lip_tip_fillet_radius:           { type: number, minimum: 0 }
+      lip_corner_fillet_radius:        { type: number, minimum: 0 }
+
+  internal:
+    type: object
+    additionalProperties: true
+    properties:
+      object_clearance:     { type: number, minimum: 0 }
+      bracket_clearance:    { type: number, minimum: 0 }
+      cable_bend_allowance: { type: number, minimum: 0 }
+      z_margin:             { type: number, minimum: 0 }
+
+  fillet:
+    type: object
+    additionalProperties: false
+    properties:
+      outer_radius:  { type: number, minimum: 0 }
+      inner_radius:  { type: number, minimum: 0 }
+      bottom_radius: { type: number, minimum: 0 }
+
+  hinge:
+    type: object
+    description: |
+      hinge / catch / その他 closure サブ構造。/hinged-lid が拡張する。
+      キー構成は機構次第でオープン。
+    additionalProperties: true
+
+  catch:
+    type: object
+    additionalProperties: true
+
+  hardware:
+    type: object
+    description: ピン・ねじ等の物理スペック(/hinged-lid プリセット)
+    additionalProperties: true
+
+  latch:
+    type: object
+    description: ラッチ機構(/hinged-lid)
+    additionalProperties: true
+
+  carabiner_tab:
+    type: object
+    additionalProperties: true
+
+  body_text:
+    type: object
+    additionalProperties: true

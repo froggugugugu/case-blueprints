@@ -113,10 +113,19 @@ claude
 
 - `project-config.yaml` — プリンタ設定など(あなたが編集)
 - `pyproject.toml` — Python 依存とツール設定
-- `schemas/` — 機械可読 YAML スキーマ
-- `src/` — Claude が実装する Python パッケージ
+- `CLAUDE.md` — Claude Code 起動時に自動ロードされるガイド(`@` import で関連ドキュメント連結)
+- `schemas/` — 機械可読 YAML スキーマ(JSON-Schema 2020-12)
+- `src/case_blueprint/` — 共通実装(loader / geometry / validators / feature_registry / state / closures)
 - `src/fonts/` — サードパーティフォント(`body_text` feature 等で使用)
-- `tests/` — Claude が書くテスト
+- `tests/` — pytest による smoke test
+- `.claude/`:
+  - `settings.json` — permissions + hooks(自動ゲート執行)
+  - `skills/` — 7 つの skill 定義
+  - `agents/` — サブエージェント(cad-validator, slicer-advisor)
+  - `rules/` — path-scoped ルール(cad-conventions, yaml-style, print-safety)
+  - `hooks/` — SessionStart / PostToolUse / Stop の自動執行スクリプト
+  - `pitfalls.md` — 17 項の落とし穴
+  - `quality-gates.md` — 5 段階ゲート + 横断スキル
 
 ---
 

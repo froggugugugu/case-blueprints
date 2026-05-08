@@ -1,0 +1,51 @@
+# CLAUDE.md — このプロジェクトのガイド
+
+> このファイルは `case-blueprints` テンプレートから生成されたプロジェクト用です。
+> Claude Code 起動時に自動ロードされ、`@` import で関連ドキュメントを取り込みます。
+
+---
+
+## 不変原則(変更禁止)
+
+@.claude/rules/constitution.md
+
+## 5 段階ワークフロー + プロジェクトリード + 機構特化
+
+@.claude/quality-gates.md
+
+## 落とし穴と対処
+
+@.claude/pitfalls.md
+
+---
+
+## このプロジェクト特有の方針
+
+(ここに「このケース固有のメモ」を書く。例:屋外用途、特定材料への配慮 等)
+
+🚧 利用者が随時追記してください。
+
+---
+
+## ファイル責務
+
+- **人間管理(`input/`)**: あなたが編集
+  - `input/objects/<id>.yaml` — 採寸結果(/measure)
+  - `input/design-params/case-config.yaml` — 寸法パラメータ(直接編集 OK)
+  - `input/feedback/<date>.md` — 自然言語フィードバック
+- **AI 管理(`output/`)**: Claude が生成・更新、人間は読むのみ
+- **ハイブリッド(`input/requirements/case-spec.yaml`)**: Claude 初稿 + 人間補正 OK
+
+詳細は @README.md を参照。
+
+## 推奨フロー
+
+1. `/lead` で開始 → 状態判定 + 次の一手を提示
+2. 直接 skill を呼ぶ場合: `/measure` → `/design` → `/review-fix` ⇄ `/fit-check` → `/export`
+3. ヒンジ蓋ケースは `/hinged-lid init` で詳細を埋める
+
+## ゲート(必読)
+
+- 段階 4 を飛ばさない(validator ❌ を見逃すリスク)
+- `case-config.yaml` 編集後は `python output/design/generator.py` を実行
+- 設計確定 → `/fit-check` → `/export` の順を守る

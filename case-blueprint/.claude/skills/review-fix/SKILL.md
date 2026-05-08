@@ -1,6 +1,9 @@
 ---
 name: review-fix
 description: 段階 4 — 可視化レビューループ。利用者からのフィードバック(自然言語 or YAML 直接編集)を取り込み、case-spec.yaml / case-config.yaml / generator.py を更新して再実行する。
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(git diff *), Bash(.venv/bin/python *), Bash(python *)
+paths:
+  - "input/feedback/**/*.md"
 ---
 
 # /review-fix — フィードバック反映 skill

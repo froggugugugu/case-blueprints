@@ -1,0 +1,23 @@
+walls:
+  thickness: 2.4                  # mm
+  bottom_thickness: 2.4
+
+lid:
+  thickness: 2.0
+  fit_clearance: 0.3              # 推奨下限(P5 参照)
+  lip_height: 3.0
+
+internal:
+  object_clearance: 1.0           # オブジェクト周辺の余裕 (mm)
+  bracket_clearance: 0.3
+
+fillet:
+  outer_radius: 2.0
+  inner_radius: 0.5
+
+# features 別ブロック(オープン構造)
+ventilation:
+  pattern: grid
+  density: 0.3                    # 0.0-1.0、開孔率
+  hole_diameter: 4.0
+  margin_from_edge: 5.0

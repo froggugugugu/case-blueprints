@@ -1,0 +1,60 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://case-blueprints/schemas/project-config.schema.yaml"
+title: ProjectConfig
+description: |
+  プロジェクト中央設定。利用者(人間)が編集し、Claude は読み取りのみ
+  (constitution §1)。
+
+type: object
+required: [project, cad_backend, print_settings, design_rules]
+additionalProperties: false
+
+properties:
+  project:
+    type: object
+    required: [name, version]
+    additionalProperties: false
+    properties:
+      name:
+        type: string
+        pattern: "^[a-z0-9][a-z0-9-]*$"
+      version:
+        type: string
+
+  cad_backend:
+    type: object
+    required: [type, python_version]
+    additionalProperties: false
+    properties:
+      type:
+        type: string
+        description: 当面 cadquery(constitution §2)。将来は他形式の Python CAD
+      python_version:
+        type: string
+
+  print_settings:
+    type: object
+    required: [printer_bed, nozzle_diameter, default_material]
+    additionalProperties: false
+    properties:
+      printer_bed:
+        type: array
+        items: { type: number, exclusiveMinimum: 0 }
+        minItems: 3
+        maxItems: 3
+        description: "[X, Y, Z] (mm) 造形領域"
+      nozzle_diameter:
+        type: number
+        exclusiveMinimum: 0
+      default_material:
+        type: string
+        description: PLA / PETG / ABS / TPU 等
+
+  design_rules:
+    type: object
+    required: [min_wall_thickness, hole_clearance, fit_clearance]
+    additionalProperties: false
+    properties:
+      min_wall_thickness: { type: number, exclusiveMinimum: 0 }
+      hole_clearance:     { type: number, minimum: 0 }
+      fit_clearance:      { type: number, minimum: 0 }

@@ -1,0 +1,16 @@
+walls:
+  thickness: 2.4
+  bottom_thickness: 2.4
+
+lid:
+  thickness: 2.0
+  fit_clearance: 0.3
+  lip_height: 3.0
+
+internal:
+  object_clearance: 1.0
+  bracket_clearance: 0.3
+
+fillet:
+  outer_radius: 2.0
+  inner_radius: 0.5

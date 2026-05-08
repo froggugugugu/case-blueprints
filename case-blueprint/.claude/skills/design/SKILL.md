@@ -1,6 +1,11 @@
 ---
 name: design
 description: 段階 2-3 — input/objects/*.yaml と project-config.yaml を統合し、case-spec.yaml(ケース全体仕様)を生成。続いて CadQuery の generator.py と validator.py を出力し、STEP/STL に書き出す。
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(.venv/bin/python *), Bash(python *)
+paths:
+  - "input/requirements/**/*.yaml"
+  - "input/design-params/**/*.yaml"
+  - "output/design/**/*.py"
 ---
 
 # /design — 要件統合と設計生成 skill

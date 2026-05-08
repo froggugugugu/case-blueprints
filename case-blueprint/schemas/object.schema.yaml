@@ -1,0 +1,80 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://case-blueprints/schemas/object.schema.yaml"
+title: Object
+description: |
+  ケースに収納する単一オブジェクトの採寸結果。
+  /measure skill が input/objects/<id>.yaml に 1 ファイル 1 オブジェクトで保存する。
+
+type: object
+required: [id, name, shape, dimensions, tolerance]
+additionalProperties: false
+
+properties:
+  id:
+    type: string
+    pattern: "^[a-z0-9][a-z0-9-]*$"
+    description: 英数字+ハイフン、先頭は英数字。ファイル名と一致
+
+  name:
+    type: string
+    minLength: 1
+    description: 表示名(日本語可)
+
+  shape:
+    enum: [rectangular, cylindrical, custom]
+    description: 形状カテゴリ
+
+  front_face:
+    enum: [connector_side, display_side, custom]
+    description: 「正面」の決め方(/measure Step 3.5)
+
+  dimensions:
+    type: object
+    description: |
+      shape ごとに必要なキーが変わる:
+      - rectangular: width / depth / height
+      - cylindrical: diameter / height
+      - custom: bounding box の width / depth / height + notes に詳細
+    properties:
+      width:    { type: number, exclusiveMinimum: 0 }
+      depth:    { type: number, exclusiveMinimum: 0 }
+      height:   { type: number, exclusiveMinimum: 0 }
+      diameter: { type: number, exclusiveMinimum: 0 }
+    additionalProperties: false
+
+  tolerance:
+    type: number
+    minimum: 0
+    description: 製造ばらつき・測定誤差を吸収するための公差 (mm)。デフォルト 0.5
+
+  notes:
+    type: [string, "null"]
+    description: |
+      物理特性 / コネクタ・操作 / 接続関係 / 運用方針 / 使い方の意図 /
+      表示・操作面 / サイズ最適化方針 を自由記述。
+      /design skill が features 推論の材料に使う
+
+allOf:
+  - if:
+      properties: { shape: { const: rectangular } }
+      required: [shape]
+    then:
+      properties:
+        dimensions:
+          required: [width, depth, height]
+
+  - if:
+      properties: { shape: { const: cylindrical } }
+      required: [shape]
+    then:
+      properties:
+        dimensions:
+          required: [diameter, height]
+
+  - if:
+      properties: { shape: { const: custom } }
+      required: [shape]
+    then:
+      properties:
+        dimensions:
+          required: [width, depth, height]
