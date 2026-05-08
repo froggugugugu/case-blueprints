@@ -16,6 +16,9 @@ from case_blueprint.features import (
     ventilation,
     cable_port,
     display_window,
+    button_cutout,
+    mounting_bracket,
+    body_text,
 )
 
 
@@ -46,7 +49,10 @@ class TestSideNormalization:
 
 
 class TestRegistry:
-    @pytest.mark.parametrize("ftype", ["ventilation", "cable_port", "display_window"])
+    @pytest.mark.parametrize("ftype", [
+        "ventilation", "cable_port", "display_window",
+        "button_cutout", "mounting_bracket", "body_text",
+    ])
     def test_registered(self, ftype):
         assert ftype in HANDLERS
 
@@ -144,6 +150,148 @@ class TestDisplayWindowValidate:
         )
 
 
+# ===== button_cutout validate =====
+
+
+class TestButtonCutoutValidate:
+    def test_round_requires_diameter(self):
+        with pytest.raises(AssertionError, match="diameter"):
+            button_cutout.validate_button_cutout({"side": "+Z", "shape": "round"}, {})
+
+    def test_square_requires_size(self):
+        with pytest.raises(AssertionError, match="size"):
+            button_cutout.validate_button_cutout({"side": "+Z", "shape": "square"}, {})
+
+    def test_gloves_round_minimum(self):
+        with pytest.raises(AssertionError, match="手袋越し"):
+            button_cutout.validate_button_cutout(
+                {"side": "+Z", "shape": "round", "diameter": 8.0,
+                 "gloves_compatible": True}, {}
+            )
+
+    def test_gloves_round_pass(self):
+        button_cutout.validate_button_cutout(
+            {"side": "+Z", "shape": "round", "diameter": 14.0,
+             "gloves_compatible": True}, {}
+        )
+
+    def test_gloves_square_short_side(self):
+        with pytest.raises(AssertionError, match="手袋越し"):
+            button_cutout.validate_button_cutout(
+                {"side": "+Z", "shape": "square", "size": [20, 6],
+                 "gloves_compatible": True}, {}
+            )
+
+    def test_rounded_square_corner_too_large(self):
+        with pytest.raises(AssertionError, match="corner_radius"):
+            button_cutout.validate_button_cutout(
+                {"side": "+Z", "shape": "rounded_square", "size": [10, 10],
+                 "corner_radius": 6}, {}
+            )
+
+
+# ===== mounting_bracket validate =====
+
+
+class TestMountingBracketValidate:
+    def test_style_required(self):
+        with pytest.raises(AssertionError, match="style"):
+            mounting_bracket.validate_mounting_bracket({}, {})
+
+    def test_unknown_style(self):
+        with pytest.raises(AssertionError, match="未登録"):
+            mounting_bracket.validate_mounting_bracket(
+                {"style": "weird_thing"}, {}
+            )
+
+    def test_m5_screw_holes_pattern(self):
+        with pytest.raises(AssertionError, match="pattern"):
+            mounting_bracket.validate_mounting_bracket(
+                {"style": "m5_screw_holes", "side": "-Z", "pattern": "diamond"}, {}
+            )
+
+    def test_m5_screw_holes_counterbore(self):
+        with pytest.raises(AssertionError, match="counterbore"):
+            mounting_bracket.validate_mounting_bracket(
+                {"style": "m5_screw_holes", "side": "-Z",
+                 "diameter": 5.0, "counterbore": {"diameter": 4.0, "depth": 3}}, {}
+            )
+
+    def test_m5_screw_holes_valid(self):
+        mounting_bracket.validate_mounting_bracket(
+            {"style": "m5_screw_holes", "side": "-Z",
+             "pattern": "square", "pitch": 38.1, "diameter": 5.0,
+             "counterbore": {"diameter": 9.0, "depth": 3.0}}, {}
+        )
+
+    def test_ribs_target_required(self):
+        with pytest.raises(AssertionError, match="target"):
+            mounting_bracket.validate_mounting_bracket({"style": "ribs"}, {})
+
+    def test_ram_ball_b_base_too_small(self):
+        with pytest.raises(AssertionError, match="base_diameter"):
+            mounting_bracket.validate_mounting_bracket(
+                {"style": "ram_ball_b", "side": "-Z",
+                 "base_diameter": 22.0, "base_thickness": 4.0}, {}
+            )
+
+    def test_ram_ball_b_base_too_thin(self):
+        with pytest.raises(AssertionError, match="base_thickness"):
+            mounting_bracket.validate_mounting_bracket(
+                {"style": "ram_ball_b", "side": "-Z",
+                 "base_diameter": 30.0, "base_thickness": 2.0}, {}
+            )
+
+
+# ===== body_text validate =====
+
+
+class TestBodyTextValidate:
+    def test_text_required(self):
+        with pytest.raises(AssertionError, match="text が空"):
+            body_text.validate_body_text(
+                {"side": "+Z", "text": "", "font_file": "x.ttf"}, {}
+            )
+
+    def test_font_file_required(self):
+        with pytest.raises(AssertionError, match="font_file"):
+            body_text.validate_body_text(
+                {"side": "+Z", "text": "HELLO"}, {}
+            )
+
+    def test_emboss_depth_zero(self):
+        with pytest.raises(AssertionError, match="emboss_depth"):
+            body_text.validate_body_text(
+                {"side": "+Z", "text": "X", "font_file": "x.ttf",
+                 "emboss_depth": 0.0}, {}
+            )
+
+    def test_emboss_depth_too_thin(self):
+        with pytest.raises(AssertionError, match="0.4mm"):
+            body_text.validate_body_text(
+                {"side": "+Z", "text": "X", "font_file": "x.ttf",
+                 "emboss_depth": 0.2}, {}
+            )
+
+    def test_font_file_missing(self, tmp_path):
+        with pytest.raises(AssertionError, match="フォント"):
+            body_text.validate_body_text(
+                {"side": "+Z", "text": "HELLO", "font_file": "nonexistent.ttf"},
+                {},
+                font_dir=str(tmp_path),
+            )
+
+    def test_font_file_present(self, tmp_path):
+        f = tmp_path / "fake.ttf"
+        f.write_bytes(b"fakefont")
+        body_text.validate_body_text(
+            {"side": "+Z", "text": "HELLO", "font_file": "fake.ttf",
+             "emboss_depth": 0.6, "size": 8.0},
+            {},
+            font_dir=str(tmp_path),
+        )
+
+
 # ===== CadQuery 実体テスト(オプショナル)=====
 
 
@@ -215,3 +363,44 @@ class TestDisplayWindowGeometry:
              "bezel": {"depth": 1.0, "margin": 1.5}}
         ], {}).val().Volume()
         assert with_bezel < plain
+
+
+class TestButtonCutoutGeometry:
+    def test_round_cuts_through(self, box, box_volume_initial):
+        result = apply_all(box, [
+            {"type": "button_cutout", "side": "+Z", "shape": "round",
+             "diameter": 14.0, "position": [0, -10]}
+        ], {})
+        diff = box_volume_initial - result.val().Volume()
+        # π * 7^2 * 30 = 約 4618
+        assert 4400 < diff < 4800
+
+    def test_rounded_square_cuts(self, box, box_volume_initial):
+        result = apply_all(box, [
+            {"type": "button_cutout", "side": "+Z", "shape": "rounded_square",
+             "size": [16, 10], "corner_radius": 1.5}
+        ], {})
+        # 16 * 10 - 角 R 控除 ≒ 158 程度の sketch 面積、深さ 30
+        diff = box_volume_initial - result.val().Volume()
+        assert 4500 < diff < 4900
+
+
+class TestMountingBracketGeometry:
+    def test_m5_screw_holes_4_points(self, box, box_volume_initial):
+        result = apply_all(box, [
+            {"type": "mounting_bracket", "style": "m5_screw_holes",
+             "side": "-Z", "pattern": "square", "pitch": 30.0, "diameter": 5.0}
+        ], {})
+        # M5 (φ5) × 4 点が貫通(深さ 30)。π * 2.5^2 * 30 * 4 = 約 2356
+        diff = box_volume_initial - result.val().Volume()
+        assert 2200 < diff < 2500
+
+    def test_ram_ball_b_adds_disk(self, box, box_volume_initial):
+        result = apply_all(box, [
+            {"type": "mounting_bracket", "style": "ram_ball_b",
+             "side": "-Z", "base_diameter": 30.0, "base_thickness": 4.0,
+             "pitch": 38.1, "screw_diameter": 5.0}
+        ], {})
+        # 円盤を貼って 4 穴を開ける。元体積より大きいはず(円盤の追加 > 4 穴の控除)
+        v = result.val().Volume()
+        assert v > box_volume_initial

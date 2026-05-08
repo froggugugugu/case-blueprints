@@ -66,13 +66,13 @@ def apply_display_window(part: Any, feature: dict, case_config: dict) -> Any:
     u, v = float(pos[0]), float(pos[1])
     cr = float(feature.get("corner_radius", 0))
 
-    # 主開口(矩形 cutThruAll)
+    # 主開口(矩形 cutThruAll、corner_radius > 0 なら Sketch API で角丸め)
     wp = part.faces(selector).workplane(centerOption="CenterOfBoundBox").center(u, v)
-    sketch = wp.rect(w, h)
     if cr > 0:
-        # 角を fillet
-        sketch = sketch.vertices().fillet2D(cr)
-    part = sketch.cutThruAll()
+        sk = cq.Sketch().rect(w, h).vertices().fillet(cr)
+        part = wp.placeSketch(sk).cutThruAll()
+    else:
+        part = wp.rect(w, h).cutThruAll()
 
     # ベゼル(段差掘り込み)
     bezel = feature.get("bezel")
@@ -80,12 +80,14 @@ def apply_display_window(part: Any, feature: dict, case_config: dict) -> Any:
         bd = float(bezel["depth"])
         bm = float(bezel["margin"])
         bw, bh = w + 2 * bm, h + 2 * bm
-        bezel_sketch = (
+        bezel_wp = (
             part.faces(selector).workplane(centerOption="CenterOfBoundBox")
-            .center(u, v).rect(bw, bh)
+            .center(u, v)
         )
         if cr > 0:
-            bezel_sketch = bezel_sketch.vertices().fillet2D(cr + bm)
-        part = bezel_sketch.cutBlind(-bd)
+            sk = cq.Sketch().rect(bw, bh).vertices().fillet(cr + bm)
+            part = bezel_wp.placeSketch(sk).cutBlind(-bd)
+        else:
+            part = bezel_wp.rect(bw, bh).cutBlind(-bd)
 
     return part

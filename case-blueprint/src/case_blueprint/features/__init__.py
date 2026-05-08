@@ -57,3 +57,6 @@ def cq_face_selector(side: str) -> str:
 from . import ventilation  # noqa: E402,F401
 from . import cable_port  # noqa: E402,F401
 from . import display_window  # noqa: E402,F401
+from . import button_cutout  # noqa: E402,F401
+from . import mounting_bracket  # noqa: E402,F401
+from . import body_text  # noqa: E402,F401
