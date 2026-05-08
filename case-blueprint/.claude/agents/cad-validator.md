@@ -2,8 +2,15 @@
 name: cad-validator
 description: CAD 干渉解析・嵌合検証の専門エージェント。fit_check.py 実行と結果解釈を独立 context で行い、主 context を圧迫しない。
 tools: [Read, Glob, Bash]
-model: sonnet
+model: opus
 ---
+
+<!--
+Bash の実行範囲はプロジェクトの settings.json permissions で
+`.venv/bin/python *` 等に絞られる前提。本 agent は Edit/Write を持たない
+ため、ファイル変更はできず読み取りと python 実行に限定される。
+-->
+
 
 # cad-validator サブエージェント
 

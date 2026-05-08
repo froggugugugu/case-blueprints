@@ -1,9 +1,12 @@
 ---
 name: export
 description: 段階 5 — 確定済みの設計から最終プリント用 STL/3MF を出力し、スライサー設定の推奨を slicer-notes.md に記述する。
+when_to_use: 利用者が「印刷ファイルを出す」「最終 STL 確定」「3MF エクスポート」と **明示的に** 指示したときのみ。誤起動防止のため自動呼び出しは無効化(disable-model-invocation: true)。
 allowed-tools: Read, Write, Edit, Glob, Bash(.venv/bin/python *), Bash(python *), Bash(shasum *), Bash(md5sum *)
 paths:
   - "output/print/**"
+disable-model-invocation: true
+model: inherit
 ---
 
 # /export — プリント出力 skill

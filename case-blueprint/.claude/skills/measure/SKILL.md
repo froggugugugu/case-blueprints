@@ -1,9 +1,11 @@
 ---
 name: measure
 description: 段階 1 — ケースに収納するオブジェクトを対話的に採寸し、input/objects/<id>.yaml に 1 ファイル 1 オブジェクトで保存する。座標軸と「正面」の基準を提示してから採寸を促す。
+when_to_use: 「採寸する」「測りたい」「オブジェクト追加」「収納物の登録」「ノギスで測る」のとき。
 allowed-tools: Read, Write, Edit, Glob, Bash(.venv/bin/python -m case_blueprint.cli validate-schema *)
 paths:
   - "input/objects/**/*.yaml"
+model: inherit
 ---
 
 # /measure — オブジェクト採寸 skill

@@ -1,10 +1,12 @@
 ---
 name: fit-check
 description: 段階 4-5 の橋渡し — パーツ間の嵌合・接合面・蝶番組合せの干渉/クリアランスを点検する。リップ嵌合、蝶番ナックル組み合わせ、ねじ穴・差し込み・スナップ等の突合機構を CAD 干渉解析+ルールベースで検証。
+when_to_use: 「嵌合をチェック」「干渉してないか確認」「ヒンジが組める?」「export 前の最終チェック」「ALLOWLIST を見直す」のとき。
 allowed-tools: Read, Write, Edit, Glob, Bash(.venv/bin/python *), Bash(python *)
 paths:
   - "output/design/fit_check.py"
   - "output/reports/fit-check.md"
+model: claude-opus-4-7
 ---
 
 # /fit-check — 嵌合・接合チェック skill

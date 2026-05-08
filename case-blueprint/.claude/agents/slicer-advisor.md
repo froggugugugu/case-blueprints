@@ -2,8 +2,15 @@
 name: slicer-advisor
 description: 印刷向き・サポート要否・材料別設定の推奨を生成する専門エージェント。/export が slicer-notes.md を組み立てる際に呼ぶ。
 tools: [Read, Write, Glob, Bash]
-model: sonnet
+model: opus
 ---
+
+<!--
+部位別サポート判断や材料別パラメータ表は文脈理解が要るため model: opus。
+Write は `output/print/slicer-notes.md` への書き出しのみを想定し、
+範囲制限は settings.json permissions 側で行う。
+-->
+
 
 # slicer-advisor サブエージェント
 
