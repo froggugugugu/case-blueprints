@@ -8,6 +8,7 @@
 | サンプル | closure | 用途 |
 |---|---|---|
 | [`minimal/`](minimal/README.md) | `snap_fit` | 名刺ケース 1 部品オブジェクト、最小構成 |
+| [`bike-navi-mvp/`](bike-navi-mvp/README.md) | `screws` + heat-set + ガスケット | バイクナビ統合ケース。features 7 種、屋外・車載・振動対策の総合参照 |
 
 ## 使い方
 

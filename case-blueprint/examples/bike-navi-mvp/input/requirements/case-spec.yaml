@@ -1,0 +1,89 @@
+case:
+  name: bike-navi-mvp
+  type: lidded_box
+  closure:
+    method: screws            # 防水・振動対策で screws + heat-set + ガスケット溝
+    lid_axis: "+Z"
+  print_orientation:
+    body: bottom_down         # +Z 底接地、ディスプレイ面が終層
+    lid: top_down             # 蓋天面が bed、リップ・装飾は終層
+  layout:
+    arrangement: stacked      # 1 オブジェクト構成、Phase 2 で manual 化予定
+    orientation: horizontal
+    notes: |
+      持ち方: ハンドルバー横置き。長辺 X = 左右、短辺 Y = 手前奥。
+      ポート向き: USB-C 電源 = -Y(背面)、micro-USB GPS = +X(右側面)。
+      ディスプレイ: +Z(上面)、コネクタ面は底接地禁止。
+      マウント: -Z(底面)に RAM ボール B サイズ 4 点 M5 PCD 38.1mm。
+  features:
+
+    # --- ディスプレイ(段差で IPS パネルを保持)---
+    - type: display_window
+      side: "+Z"
+      size: [155, 90]
+      corner_radius: 1.5
+      bezel: { depth: 1.2, margin: 2.0 }
+      position: [0, 0]
+
+    # --- 防水ケーブルポート ×2(P18 対策、flange でグランド受け)---
+    - type: cable_port
+      side: "-Y"
+      diameter: 9.0           # USB-C ケーブルグランド受け
+      flange: 1.5
+      flange_outer_diameter: 16.0
+      position: [40, 0]
+      chamfer: 0.5
+    - type: cable_port
+      side: "+X"
+      diameter: 6.0           # micro-USB GPS グランド受け
+      flange: 1.5
+      flange_outer_diameter: 12.0
+      position: [0, -10]
+      chamfer: 0.5
+
+    # --- 物理ボタン ×2(手袋越し操作必須、P19 振動対策)---
+    - type: button_cutout
+      side: "-Y"
+      shape: round
+      diameter: 14.0
+      position: [60, 0]
+      gloves_compatible: true
+    - type: button_cutout
+      side: "-Y"
+      shape: round
+      diameter: 14.0
+      position: [-60, 0]
+      gloves_compatible: true
+
+    # --- ラズパイ放熱(P20 対策、+Y 側に slots)---
+    - type: ventilation
+      side: "+Y"
+      pattern: slots
+      density: 0.25
+      slot_width: 2.0
+      slot_length: 18.0
+      pitch: 5.0
+
+    # --- RAM ボール B マウント(底面、振動対策込み)---
+    - type: mounting_bracket
+      side: "-Z"
+      style: ram_ball_b
+      base_diameter: 32.0
+      base_thickness: 5.0     # 振動疲労対策で 5mm 以上(P19)
+      pitch: 38.1
+      screw_diameter: 5.0
+
+    # --- 機種マーキング(凸 emboss、+Z 終層で鮮明に)---
+    - type: body_text
+      side: "+Z"
+      text: "BIKE NAV"
+      font_file: "PLACEHOLDER.ttf"   # 利用者が input/fonts/ に配置する
+      emboss_depth: 0.6              # 0.2mm 層 × 3 層
+      size: 6.0
+      position: [0, 38]
+
+objects:
+  - id: bike-navi-stack
+    position: [0, 0, 0]
+    rotation: 0
+    note: ディスプレイを +Z、コネクタ集中面を -Y、GPS USB を +X

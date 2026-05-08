@@ -83,6 +83,7 @@ properties:
           maxItems: 2
           description: "[w, h] 矩形ポートの寸法 (mm)。円形は省略"
         diameter: { type: number, exclusiveMinimum: 0 }
+        note: { type: [string, "null"], description: "用途・型番等の自由記述(任意)" }
 
   controls:
     type: array
@@ -104,6 +105,7 @@ properties:
           items: { type: number, minimum: 0 }
           minItems: 2
           maxItems: 2
+        note: { type: [string, "null"], description: "用途・操作意図等の自由記述(任意)" }
 
   thermal:
     type: object

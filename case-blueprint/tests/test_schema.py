@@ -80,6 +80,64 @@ def test_examples_minimal_loads_clean():
     assert cfg["lid"]["fit_clearance"] > 0
 
 
+def test_examples_bike_navi_mvp_loads_clean():
+    """examples/bike-navi-mvp/ の入力一式が schema を通ること + features 7 種を含む。"""
+    obj = loader.load_object(EXAMPLES / "bike-navi-mvp/input/objects/bike-navi-stack.yaml")
+    assert obj["id"] == "bike-navi-stack"
+    assert obj["thermal"]["requires_ventilation"] is True
+    assert "+X" in obj["orientation_hint"]["forbidden_bottoms"]
+
+    spec = loader.load_case_spec(
+        EXAMPLES / "bike-navi-mvp/input/requirements/case-spec.yaml"
+    )
+    assert spec["case"]["closure"]["method"] == "screws"
+    types = [f["type"] for f in spec["case"]["features"]]
+    assert "display_window" in types
+    assert "cable_port" in types
+    assert "button_cutout" in types
+    assert "ventilation" in types
+    assert "mounting_bracket" in types
+    assert "body_text" in types
+    # cable_port は 2 つ(USB-C と GPS)
+    assert types.count("cable_port") == 2
+    # button_cutout は 2 つ
+    assert types.count("button_cutout") == 2
+
+    cfg = loader.load_case_config(
+        EXAMPLES / "bike-navi-mvp/input/design-params/case-config.yaml"
+    )
+    assert cfg["closure"]["screws"]["count"] == 6  # P19 振動冗長
+    assert cfg["lid"]["gasket_groove"]["depth"] == 1.5  # P18 防水ガスケット
+
+
+def test_examples_bike_navi_features_validate():
+    """各 features が src 側の validate を通ることを確認(font 以外)。"""
+    from case_blueprint.features import (
+        ventilation, cable_port, display_window, button_cutout, mounting_bracket,
+    )
+    spec = loader.load_case_spec(
+        EXAMPLES / "bike-navi-mvp/input/requirements/case-spec.yaml"
+    )
+    cfg = loader.load_case_config(
+        EXAMPLES / "bike-navi-mvp/input/design-params/case-config.yaml"
+    )
+    by_type = {}
+    for f in spec["case"]["features"]:
+        by_type.setdefault(f["type"], []).append(f)
+
+    for f in by_type.get("ventilation", []):
+        ventilation.validate_ventilation(f, cfg)
+    for f in by_type.get("cable_port", []):
+        cable_port.validate_cable_port(f, cfg)
+    for f in by_type.get("display_window", []):
+        display_window.validate_display_window(f, cfg)
+    for f in by_type.get("button_cutout", []):
+        button_cutout.validate_button_cutout(f, cfg)
+    for f in by_type.get("mounting_bracket", []):
+        mounting_bracket.validate_mounting_bracket(f, cfg)
+    # body_text はフォントが無いとアサート失敗するので validate を直接呼ばない
+
+
 def test_object_negative_dimension_rejected():
     if not loader._HAS_JSONSCHEMA:
         pytest.skip("jsonschema 未インストール")

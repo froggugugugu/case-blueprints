@@ -1,0 +1,54 @@
+id: bike-navi-stack
+name: バイクナビ統合スタック(架空)
+shape: rectangular
+front_face: display_side
+dimensions:
+  width: 175.0   # X 方向(横長持ち、ハンドルバー横方向)
+  depth: 110.0   # Y 方向(手前 → 奥)
+  height: 35.0   # Z 方向(底からディスプレイ表面まで)
+tolerance: 0.5
+notes: |
+  バイクナビ MVP の架空 1 ボックス。実装としては:
+  - ディスプレイ(7 inch、165 × 100 × 6mm)を本体前面に
+  - ラズパイ 4(85 × 56 × 18mm)を背面に
+  - GPS モジュール(35 × 25 × 10mm)を側面に
+  これらを 1 体に組み付けた状態を 1 ボックスとして外装ケースに収める。
+
+  実案件で内部レイアウトを 3 分割して詳細化する場合は、layout.arrangement
+  を `manual` にして objects[].position[x, y, z] を直接指定する想定
+  (Phase 2 で対応予定)。
+
+connectors:
+  - type: USB-C
+    face: "-Y"      # 背面
+    position: [40, 0]
+    note: 電源 + 充電
+  - type: micro-USB
+    face: "+X"      # 右側面
+    position: [0, -10]
+    note: GPS データ
+controls:
+  - type: button
+    face: "-Y"
+    position: [60, 0]
+    note: 電源(長押し ON/OFF)
+  - type: button
+    face: "-Y"
+    position: [-60, 0]
+    note: ホーム(短押し)
+  - type: display
+    face: "+Z"      # 上面 = ディスプレイ
+    position: [0, 0]
+thermal:
+  hot_spots:
+    - face: "+Z"
+      position: [-30, 0]   # CPU 位置(ディスプレイ裏のラズパイ CPU 上)
+      max_temp_c: 75
+  max_surface_temp_c: 65
+  requires_ventilation: true
+weight_g: 380
+grip_zones: []        # ハンドルマウント前提、手で握らない
+orientation_hint:
+  bottom_preference: "-Z"   # 印刷時に底面が bed
+  top_preference: "+Z"      # ディスプレイ面は終層に出して仕上げを綺麗に(P1)
+  forbidden_bottoms: ["-Y", "+X"]   # コネクタ面は底にしない

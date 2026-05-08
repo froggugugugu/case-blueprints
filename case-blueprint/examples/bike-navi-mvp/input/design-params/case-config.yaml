@@ -1,0 +1,62 @@
+# 屋外・車載・振動環境を想定した PETG 用パラメータ
+# 詳細は @.claude/rules/materials-catalog.md / pitfalls.md P18-P20 参照
+
+walls:
+  thickness: 2.8                    # PETG 屋外用、振動対策で標準より厚め
+  bottom_thickness: 3.2             # 底面はマウント取付で剛性が要る
+
+lid:
+  thickness: 2.4
+  fit_clearance: 0.30               # PETG snap_fit 推奨範囲(0.20-0.35)
+  lip_height: 3.0
+  # 防水ガスケット溝(P18、closures/screws での実装は Phase 2 予定)
+  gasket_groove:
+    width: 2.0
+    depth: 1.5
+    profile: rectangular            # rectangular / dovetail
+    o_ring_diameter: 2.0            # NBR φ2 を圧縮 25% で運用想定
+
+internal:
+  object_clearance: 1.5             # 屋外で熱膨張も考慮、余裕重視
+  bracket_clearance: 0.3
+  z_margin: 1.0
+
+fillet:
+  outer_radius: 3.0                 # 角ぶつけ対策で大きめ
+  inner_radius: 0.8
+
+# ねじ closure(closure.method = screws)
+closure:
+  screws:
+    count: 6                        # 振動環境で 4 → 6 点に増やす(P19)
+    boss_outer_diameter: 8.0
+    pilot_diameter: 4.2             # M3 heat-set 圧入下穴(insert OD 5.0 + 0.0)
+    countersink:
+      enabled: false                # heat-set + 裏側からねじ込みなので皿落とし不要
+
+# ハードウェア(振動対策で heat-set、マウントは RAM B)
+hardware:
+  preset: heatset_m3_brass
+  closure:
+    fastener:
+      type: heatset_insert
+      nominal: M3
+      diameter: 3.0
+      length: 8.0
+      insert_outer_diameter: 5.0
+      insert_length: 6.0
+      engagement: heatset_thread
+  mount:
+    preset: mount_ram_ball_b
+    ball:
+      type: ram_ball
+      size: B
+      diameter: 25.4
+    base:
+      pcd: 38.1
+      screw:
+        nominal: M5
+        diameter: 5.0
+        length: 12.0
+      washer: spring_washer_m5
+      locking_compound: medium      # ロックタイト中強度(利用者作業)
