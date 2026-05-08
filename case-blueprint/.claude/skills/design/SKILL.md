@@ -80,7 +80,8 @@ model: claude-opus-4-7
 ### Step 3: レイアウト方針の確認(AskUserQuestion)
 
 - 質問 1: 「オブジェクトの配置はどうしますか?」
-  - 選択肢: `stacked`(縦積み) / `side_by_side`(横並び) / `auto`(Claude 最適化)
+  - 選択肢: `stacked`(縦積み) / `side_by_side`(横並び)
+  - **`auto` は廃止**: Claude が文脈から推奨を 1 つ提示し、利用者が承認する形に統一(自由記述で別案を出すのは可)
 - 質問 2: 「ケース type は?」
   - 選択肢: `lidded_box`(フタ付き箱、デフォルト)/ `custom`(notes に記載 → 段階 4 で詰める)
 
@@ -174,7 +175,11 @@ case:
     method: snap_fit                    # 単純: snap_fit / screws / magnetic
                                          # 複合の例: snap_lip_with_hinge, snap_lip_with_screws
                                          # ヒンジ + 独立レバーラッチ(/hinged-lid 対応): hinge_lever
-    lid_axis: "+Z"                      # 蓋がどの面か(+X / -X / +Y / -Y / +Z / -Z)
+    lid_axis: "+Z"                      # 蓋がどの面か。**現在 closure 実装は `+Z` のみサポート**。
+                                         # 他軸を選びたい場合は generator.py で rotate して
+                                         # +Z へ正規化してから closure を呼ぶ。直接渡すと
+                                         # closures/__init__.py の assert_lid_axis_supported() が
+                                         # NotImplementedError で fail-fast する。
     # 複合 method の場合、サブ構造を必要に応じて追加(オープン構造):
     # snap_fit: { lip_height: 2.0, fit_clearance: 0.2 }
     # hinge:    { side: "-Y", axis: "Z", knuckle_diameter: 6.0, knuckle_count_body: 2, knuckle_count_lid: 1 }
@@ -187,7 +192,7 @@ case:
     enabled: false                      # printer_bed に収まらない場合 true
     plane: horizontal                   # horizontal / vertical
   layout:
-    arrangement: stacked                # stacked / side_by_side / auto
+    arrangement: stacked                # stacked / side_by_side
     orientation: horizontal             # horizontal / vertical
     notes: |                            # 自由記述。持ち方・ポート向き・ケーブル取り回し・内寸目標等
       持ち方: 縦持ち、長軸 X が垂直。+X 端が上(蓋)、-X 端が下(底)。

@@ -1,0 +1,22 @@
+case:
+  name: business-card-case
+  type: lidded_box
+  closure:
+    method: snap_fit
+    lid_axis: "+Z"
+  print_orientation:
+    body: bottom_down
+    lid: top_down
+  layout:
+    arrangement: stacked
+    orientation: horizontal
+    notes: |
+      名刺 1 オブジェクトのみ。配置検討は不要(stacked 既定)。
+      持ち方: 横置き。+Z 面に蓋、-Z 面が底。
+  features: []           # 最小サンプルは features なしで完結
+
+objects:
+  - id: business-cards
+    position: [0, 0, 0]
+    rotation: 0
+    note: 名刺束を XY 平面に寝かせて収納する

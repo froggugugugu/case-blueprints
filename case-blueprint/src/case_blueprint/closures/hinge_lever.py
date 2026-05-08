@@ -23,7 +23,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from . import register
+from . import assert_lid_axis_supported, register
 
 
 def resolve_hardware(case_config: dict) -> dict:
@@ -444,7 +444,7 @@ def build_latch_lever(latch_cfg: dict, hardware: dict) -> Any:
 @register("hinge_lever")
 def build_hinge_lever_closure(body: Any, lid: Any, case_spec: dict, case_config: dict) -> dict[str, Any]:
     """closure dispatcher エントリ: 3 部品を組み立てる。"""
-    del case_spec
+    assert_lid_axis_supported(case_spec)
     hw = resolve_hardware(case_config)
     body, lid = build_hinge_assembly(body, lid, case_config.get("hinge", {}), hw)
     lid = build_latch_pivot(lid, case_config.get("latch", {}), hw)

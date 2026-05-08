@@ -22,6 +22,7 @@ case-blueprints/
 │   ├── CLAUDE.md.template / project-config.yaml.template / pyproject.toml.template / .gitignore.template
 │   ├── input/{objects, requirements, design-params, feedback}/
 │   ├── output/{design, preview, print, reports}/
+│   ├── examples/{minimal/}                    # テンプレート同梱の動く参照例(コピーされる)
 │   ├── schemas/  — JSON-Schema(object / case-spec / case-config / project-config / material)
 │   ├── src/case_blueprint/{loader,geometry,exporter,feature_registry,validators,materials,state,cli,closures/,data/materials/}
 │   ├── tests/  — pytest smoke
@@ -77,9 +78,10 @@ case-blueprints/
 - skill 数は最小に保つ(現在 7: lead / measure / design / review-fix / fit-check / export / hinged-lid)。安易に増やさない
 - 5 段階ワークフローのいずれかに対応する、または明確に補完する skill のみ追加。機構特化の横断スキル(`hinged-lid` 等)は段階に属さず、closure や嵌合機構の詳細を埋める用途に限定する
 
-### `docs/`, `examples/`, `snippets/`(コピー対象外)
+### リポトップの `docs/`, `examples/`, `snippets/`(コピー対象外)
 - ここに置いたファイルは利用者プロジェクトにはコピーされない
 - 利用者が必要とするドキュメントは `case-blueprint/README.md` か `case-blueprint/.claude/` 配下に置く
+- **`case-blueprint/examples/` とは別物**。後者はテンプレート同梱の動く参照例で、`setup.sh` でコピーされる
 
 ### CLAUDE.md(本ファイル)のサイズ管理
 - **目安**: 200 行以内

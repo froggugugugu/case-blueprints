@@ -1,0 +1,16 @@
+id: business-cards
+name: 名刺の束
+shape: rectangular
+front_face: custom
+dimensions:
+  width: 91.0          # 名刺長辺(mm)
+  depth: 55.0          # 名刺短辺(mm)
+  height: 10.0         # 30 枚程度の束(0.3mm × 30 ≒ 9mm + 余裕)
+tolerance: 0.5
+notes: |
+  名刺の束を縦置き(短辺が手前)で収納する想定の最小サンプル。
+  コネクタ・電気部品なし。発熱なし。
+  /measure 完了後 /design → /review-fix → /export を一通り通せる。
+
+orientation_hint:
+  bottom_preference: "+Z"   # 名刺の積層面(=広い面)を底に

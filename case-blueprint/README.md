@@ -69,7 +69,18 @@ git commit -m "Initial: case-blueprints テンプレートから生成"
 
 `.gitignore` は `setup.sh` で展開済みなので、バイナリ派生物(STEP/STL/3MF)は自動的に除外されます。
 
-### 4. Claude Code 起動
+### 4.(任意)最小サンプルで動作確認
+
+初めて触る場合は `examples/minimal/`(snap_fit の名刺ケース)を `input/` にコピーすると、
+`/measure` を飛ばして `/design` から試せます:
+
+```bash
+cp -R examples/minimal/input/. input/
+```
+
+詳細は `examples/minimal/README.md` を参照。慣れたら `/measure` から自前のオブジェクトで始めてください。
+
+### 5. Claude Code 起動
 
 ```bash
 claude

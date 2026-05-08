@@ -12,6 +12,7 @@ import pytest
 from case_blueprint import loader
 
 FIXTURES = Path(__file__).parent / "fixtures"
+EXAMPLES = Path(__file__).parent.parent / "examples"
 
 
 def test_load_object():
@@ -58,6 +59,25 @@ def test_object_invalid_id_rejected():
             loader.load_object(tmp)
     finally:
         tmp.unlink()
+
+
+def test_examples_minimal_loads_clean():
+    """examples/minimal/ の入力一式がスキーマ検証を通ることを保証。
+
+    setup.sh で展開された利用者プロジェクトで `cp -R examples/minimal/input/. input/`
+    した直後に /design が走る前提。ここが壊れると最小サンプルが動かなくなる。
+    """
+    obj = loader.load_object(EXAMPLES / "minimal/input/objects/business-cards.yaml")
+    assert obj["id"] == "business-cards"
+    assert obj["dimensions"]["width"] == 91.0
+
+    spec = loader.load_case_spec(EXAMPLES / "minimal/input/requirements/case-spec.yaml")
+    assert spec["case"]["closure"]["method"] == "snap_fit"
+    assert spec["case"]["closure"]["lid_axis"] == "+Z"
+    assert spec["case"]["layout"]["arrangement"] in ("stacked", "side_by_side")
+
+    cfg = loader.load_case_config(EXAMPLES / "minimal/input/design-params/case-config.yaml")
+    assert cfg["lid"]["fit_clearance"] > 0
 
 
 def test_object_negative_dimension_rejected():

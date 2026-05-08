@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import register
+from . import assert_lid_axis_supported, register
 from .hinge_lever import (
     resolve_hardware as _resolve_hinge_hardware,
     validate_scale_constraints,
@@ -116,7 +116,7 @@ def build_snap_lip_with_hinge_closure(
     body: Any, lid: Any, case_spec: dict, case_config: dict
 ) -> dict[str, Any]:
     """closure dispatcher エントリ: 本体 + 蓋 の 2 部品を返す(レバー無し)。"""
-    del case_spec
+    assert_lid_axis_supported(case_spec)
     hw = _resolve_hinge_hardware(case_config)
     validate_snap_lip_with_hinge(case_config, hw)
     hinge_cfg = case_config.get("hinge", {})

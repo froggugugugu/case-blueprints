@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import register
+from . import assert_lid_axis_supported, register
 
 
 def validate_snap_fit(case_config: dict) -> None:
@@ -178,7 +178,7 @@ def build_snap_fit_closure(
     body: Any, lid: Any, case_spec: dict, case_config: dict
 ) -> dict[str, Any]:
     """closure dispatcher エントリ: 本体 + 蓋 の 2 部品を返す。"""
-    del case_spec
+    assert_lid_axis_supported(case_spec)
     validate_snap_fit(case_config)
     lid_cfg = case_config.get("lid", {})
     walls_cfg = case_config.get("walls", {})

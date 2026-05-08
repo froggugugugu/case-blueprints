@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import register
+from . import assert_lid_axis_supported, register
 from .screws import corner_positions
 
 
@@ -183,7 +183,7 @@ def build_magnetic_closure(
     body: Any, lid: Any, case_spec: dict, case_config: dict
 ) -> dict[str, Any]:
     """closure dispatcher エントリ: 本体 + 蓋 の 2 部品を返す。"""
-    del case_spec
+    assert_lid_axis_supported(case_spec)
     hw = resolve_magnetic_hardware(case_config)
     validate_magnetic(case_config, hw)
     closure_cfg = case_config.get("closure", {}).get("magnetic", {})

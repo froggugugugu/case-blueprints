@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import register
+from . import assert_lid_axis_supported, register
 
 
 def validate_screws(case_config: dict, hardware: dict) -> None:
@@ -204,7 +204,7 @@ def build_screws_closure(
     body: Any, lid: Any, case_spec: dict, case_config: dict
 ) -> dict[str, Any]:
     """closure dispatcher エントリ: 本体 + 蓋 の 2 部品を返す。"""
-    del case_spec
+    assert_lid_axis_supported(case_spec)
     hw = resolve_screws_hardware(case_config)
     validate_screws(case_config, hw)
     closure_cfg = case_config.get("closure", {}).get("screws", {})

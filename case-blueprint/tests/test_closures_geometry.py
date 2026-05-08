@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import pytest
 
+from case_blueprint import closures
 from case_blueprint.closures import (
     snap_fit,
     screws,
@@ -16,6 +17,24 @@ from case_blueprint.closures import (
     hinge_lever,
     snap_lip_with_hinge,
 )
+
+
+# ===== lid_axis ガード =====
+
+
+class TestLidAxisGuard:
+    def test_default_plus_z_passes(self):
+        closures.assert_lid_axis_supported({})  # 未指定 → +Z 既定で通る
+
+    def test_explicit_plus_z_passes(self):
+        closures.assert_lid_axis_supported({"case": {"closure": {"lid_axis": "+Z"}}})
+
+    @pytest.mark.parametrize("axis", ["+X", "-X", "+Y", "-Y", "-Z"])
+    def test_other_axes_rejected(self, axis):
+        with pytest.raises(NotImplementedError, match="未対応"):
+            closures.assert_lid_axis_supported(
+                {"case": {"closure": {"lid_axis": axis}}}
+            )
 
 
 # ===== 純 Python 検証ロジック =====

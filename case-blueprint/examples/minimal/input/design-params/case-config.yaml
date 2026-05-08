@@ -1,0 +1,17 @@
+walls:
+  thickness: 2.4
+  bottom_thickness: 2.4
+
+lid:
+  thickness: 2.0
+  fit_clearance: 0.25      # PLA 標準(materials-catalog.md 参照、推奨 0.15-0.30)
+  lip_height: 3.0
+  lip_groove_chamfer: 0.5  # 挿入を楽にする上端面取り
+
+internal:
+  object_clearance: 1.0
+  bracket_clearance: 0.3
+
+fillet:
+  outer_radius: 2.0
+  inner_radius: 0.5
