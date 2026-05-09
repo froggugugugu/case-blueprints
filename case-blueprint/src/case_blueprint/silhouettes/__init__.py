@@ -63,3 +63,5 @@ def build(
 # 副作用 import で各 silhouette が register される
 from . import rectangular  # noqa: E402,F401
 from . import rounded  # noqa: E402,F401
+from . import hex  # noqa: E402,F401
+from . import capsule  # noqa: E402,F401

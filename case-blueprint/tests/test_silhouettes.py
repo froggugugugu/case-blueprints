@@ -128,6 +128,114 @@ class TestRounded:
         assert out_round["lid_blank"].val().Volume() < out_rect["lid_blank"].val().Volume()
 
 
+class TestHex:
+    """L2-B: 六角プリズム外形。"""
+
+    def test_registered(self):
+        assert "hex" in silhouettes.SILHOUETTES
+
+    def test_returns_body_and_lid(self, small_internal, common_walls, common_lid):
+        out = silhouettes.build("hex", small_internal, common_walls, common_lid)
+        assert out["body_blank"].val().Volume() > 0
+        assert out["lid_blank"].val().Volume() > 0
+
+    def test_body_contains_internal(self, small_internal, common_walls, common_lid):
+        """内寸矩形 (50, 40, 20) が外接 hex の中に収まる(寸法面での包含)"""
+        out = silhouettes.build("hex", small_internal, common_walls, common_lid)
+        bb = out["body_blank"].val().BoundingBox()
+        # 内寸 50×40 を pointy_top 六角形(長軸 X)で内包 →
+        # outer R = max(25, 20 / (sqrt(3)/2)) ≒ max(25, 23.09) = 25
+        # 壁 +2 → outer R = 27 → 直径 54
+        # 短軸方向(Y)= 27 * sqrt(3) ≒ 46.77
+        assert bb.xlen == pytest.approx(54.0, abs=0.01)
+        assert bb.ylen == pytest.approx(46.77, abs=0.05)
+
+    def test_smaller_than_rectangular(self, small_internal, common_walls, common_lid):
+        """六角の体積は同じ外接円の矩形より小さい(角が削れる)"""
+        out_hex = silhouettes.build("hex", small_internal, common_walls, common_lid)
+        # 同じ外径の矩形(54×46.77×外寸高)と比較
+        bb = out_hex["body_blank"].val().BoundingBox()
+        rect_volume_outer_box = bb.xlen * bb.ylen * bb.zlen
+        # 六角プリズムは六角形 sketch なので、外接矩形より小さい
+        assert out_hex["body_blank"].val().Volume() < rect_volume_outer_box
+
+    def test_snap_fit_works_on_hex_body(self, small_internal, common_walls, common_lid):
+        """hex body に snap_fit closure が適用できる(bbox 内省で動く)"""
+        from case_blueprint import closures
+        out = silhouettes.build("hex", small_internal, common_walls, common_lid)
+        body = out["body_blank"]
+        lid = out["lid_blank"]
+        lid = lid.translate((0, 0, body.val().BoundingBox().zmax + lid.val().BoundingBox().zlen / 2))
+        case_spec = {"case": {"closure": {"method": "snap_fit", "lid_axis": "+Z"}}}
+        case_config = {
+            "lid": {"thickness": 2.0, "fit_clearance": 0.2, "lip_height": 3.0},
+            "walls": {"thickness": 2.0},
+        }
+        parts = closures.build("snap_fit", body, lid, case_spec, case_config)
+        assert "case-body" in parts and parts["case-body"].val().Volume() > 0
+
+    def test_screws_works_on_hex_body(self, small_internal, common_walls, common_lid):
+        """hex body に screws closure が適用できる(bbox ベースの 4 隅配置)"""
+        from case_blueprint import closures
+        out = silhouettes.build("hex", small_internal, common_walls, common_lid)
+        body = out["body_blank"]
+        lid = out["lid_blank"]
+        lid = lid.translate((0, 0, body.val().BoundingBox().zmax + lid.val().BoundingBox().zlen / 2))
+        case_spec = {"case": {"closure": {"method": "screws", "lid_axis": "+Z"}}}
+        case_config = {
+            "lid": {"thickness": 2.0, "fit_clearance": 0.2, "lip_height": 3.0},
+            "walls": {"thickness": 2.0},
+            "closure": {"screws": {"count": 4, "boss_outer_diameter": 6.0,
+                                    "pilot_diameter": 2.55}},
+            "hardware": {"closure": {"fastener": {"diameter": 3.0, "length": 8.0,
+                                                   "head_diameter": 5.6, "head_height": 1.86}}},
+        }
+        parts = closures.build("screws", body, lid, case_spec, case_config)
+        assert "case-body" in parts and parts["case-body"].val().Volume() > 0
+
+
+class TestCapsule:
+    """L2-C: 両端半円のカプセル形外形。"""
+
+    def test_registered(self):
+        assert "capsule" in silhouettes.SILHOUETTES
+
+    def test_returns_body_and_lid(self, small_internal, common_walls, common_lid):
+        out = silhouettes.build("capsule", small_internal, common_walls, common_lid)
+        assert out["body_blank"].val().Volume() > 0
+        assert out["lid_blank"].val().Volume() > 0
+
+    def test_outer_dimensions(self, small_internal, common_walls, common_lid):
+        """内寸 (50, 40, 20) + 壁 2 → 全長 54、全幅 44(短径)"""
+        out = silhouettes.build("capsule", small_internal, common_walls, common_lid)
+        bb = out["body_blank"].val().BoundingBox()
+        # 全長 X = max(w, d) + 2*wall = 50 + 4 = 54
+        # 全幅 Y = min(w, d) + 2*wall = 40 + 4 = 44
+        assert bb.xlen == pytest.approx(54.0, abs=0.01)
+        assert bb.ylen == pytest.approx(44.0, abs=0.01)
+
+    def test_smaller_than_rectangular(self, small_internal, common_walls, common_lid):
+        """capsule は同じ外接矩形より体積が小さい(両端の角が丸い)"""
+        out_caps = silhouettes.build("capsule", small_internal, common_walls, common_lid)
+        out_rect = silhouettes.build("rectangular", small_internal, common_walls, common_lid)
+        assert out_caps["body_blank"].val().Volume() < out_rect["body_blank"].val().Volume()
+
+    def test_snap_fit_works_on_capsule_body(self, small_internal, common_walls, common_lid):
+        """capsule body に snap_fit closure が適用できる(bbox 内省で動く)"""
+        from case_blueprint import closures
+        out = silhouettes.build("capsule", small_internal, common_walls, common_lid)
+        body = out["body_blank"]
+        lid = out["lid_blank"]
+        lid = lid.translate((0, 0, body.val().BoundingBox().zmax + lid.val().BoundingBox().zlen / 2))
+        case_spec = {"case": {"closure": {"method": "snap_fit", "lid_axis": "+Z"}}}
+        case_config = {
+            "lid": {"thickness": 2.0, "fit_clearance": 0.2, "lip_height": 3.0},
+            "walls": {"thickness": 2.0},
+        }
+        parts = closures.build("snap_fit", body, lid, case_spec, case_config)
+        assert "case-body" in parts and parts["case-body"].val().Volume() > 0
+
+
 # ===== closure との整合(rectangular / rounded で snap_fit が動くか)=====
 
 

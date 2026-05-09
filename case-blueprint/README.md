@@ -126,7 +126,7 @@ cp -R examples/bike-navi-mvp/input/. input/   # features 7 種の総合例
 - `pyproject.toml` — Python 依存とツール設定
 - `CLAUDE.md` — Claude Code 起動時に自動ロードされるガイド(`@` import で関連ドキュメント連結)
 - `schemas/` — 機械可読 YAML スキーマ(JSON-Schema 2020-12)
-- `src/case_blueprint/` — 共通実装(loader / geometry / validators / fit_check / feature_registry / materials / state / closures/ / features/ / data/materials/)
+- `src/case_blueprint/` — 共通実装(loader / geometry / validators / fit_check / feature_registry / materials / style / state / closures/ / features/ / silhouettes/ / data/materials/)
 - `input/fonts/` — サードパーティフォント(`body_text` feature 等で使用、利用者がローカルに配置)
 - `examples/` — 動く参照例(minimal / bike-navi-mvp)
 - `tests/` — pytest による smoke test

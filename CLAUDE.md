@@ -24,7 +24,7 @@ case-blueprints/
 │   ├── output/{design, preview, print, reports}/
 │   ├── examples/{minimal/}                    # テンプレート同梱の動く参照例(コピーされる)
 │   ├── schemas/  — JSON-Schema(object / case-spec / case-config / project-config / material)
-│   ├── src/case_blueprint/{loader,geometry,exporter,feature_registry,validators,materials,fit_check,state,cli,closures/,features/,data/materials/}
+│   ├── src/case_blueprint/{loader,geometry,exporter,feature_registry,validators,materials,fit_check,style,state,cli,closures/,features/,silhouettes/,data/materials/}
 │   ├── tests/  — pytest smoke
 │   └── .claude/
 │       ├── settings.json.template      — permissions + hooks

@@ -66,6 +66,7 @@ Claude が `project-config.yaml` を編集し、`pip install -e .` 等の環境�
  8 skills   /lead, /measure, /design, /review-fix, /fit-check,
             /export, /hinged-lid, /style
  5 closures snap_fit, screws, magnetic, snap_lip_with_hinge, hinge_lever
+ 4 silhouettes rectangular, rounded, hex, capsule
  7 features ventilation, cable_port, display_window, button_cutout,
             mounting_bracket, body_text, decorative_pattern
  5 materials pla, pla_plus, petg, abs, tpu (機構別 fit_clearance 推奨範囲付き)

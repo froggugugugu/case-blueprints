@@ -86,7 +86,7 @@ properties:
         description: 主要テーマ。custom はテーマを使わず明示値のみ
       silhouette:
         enum: [rectangular, rounded, hex, capsule]
-        description: 本体外形(L1 では rectangular のみ実装、他は L2 予約)
+        description: 本体外形(L2 で 4 種すべて実装済み、bbox 内省ベースの closure と整合)
       fillets:
         type: object
         additionalProperties: false

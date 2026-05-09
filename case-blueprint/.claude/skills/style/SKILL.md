@@ -99,7 +99,7 @@ Vision で解釈してスタイルパラメータを提案する。**L1 では�
 ```yaml
 style:
   theme: futuristic              # futuristic / minimal / fancy / industrial / cute / retro / custom
-  silhouette: rectangular        # L1 では rectangular のみ(他は将来予約)
+  silhouette: rectangular        # rectangular / rounded(角丸)/ hex(六角プリズム)/ capsule(両端半円)
   fillets:
     outer_corners: sharp         # sharp / medium / large / extra_large
     edge_treatment: chamfered_edge  # chamfered_edge / fillet / mixed / none
