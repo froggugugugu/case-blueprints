@@ -73,3 +73,36 @@ properties:
   body_text:
     type: object
     additionalProperties: true
+
+  style:
+    type: object
+    description: |
+      意匠の中間表現(/style skill が書く)。theme で大枠を決め、
+      個別キー(fillets / surface 等)で細部を上書きする(明示値優先)。
+    additionalProperties: true
+    properties:
+      theme:
+        enum: [futuristic, minimal, fancy, industrial, cute, retro, custom]
+        description: 主要テーマ。custom はテーマを使わず明示値のみ
+      silhouette:
+        enum: [rectangular, rounded, hex, capsule]
+        description: 本体外形(L1 では rectangular のみ実装、他は L2 予約)
+      fillets:
+        type: object
+        additionalProperties: false
+        properties:
+          outer_corners:    { enum: [sharp, medium, large, extra_large] }
+          edge_treatment:   { enum: [chamfered_edge, fillet, mixed, none] }
+      surface:
+        type: object
+        additionalProperties: true
+        properties:
+          pattern:  { enum: [none, hex_grid, linear_groove, dot_pattern] }
+          density:  { type: number, minimum: 0, maximum: 1 }
+          depth:    { type: number, description: "正値=凹彫り、負値=凸 emboss" }
+          side:     { enum: ["+X", "-X", "+Y", "-Y", "+Z", "-Z"] }
+          pitch:    { type: number, exclusiveMinimum: 0 }
+      reference_images:
+        type: array
+        items: { type: string }
+        description: 参考画像の URL or local path(L3 / 将来予約)

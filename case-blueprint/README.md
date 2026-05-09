@@ -91,6 +91,7 @@ cp -R examples/bike-navi-mvp/input/. input/   # features 7 種の総合例
 - `/fit-check` — 段階 4-5 橋渡し: 嵌合・干渉の点検
 - `/export` — 段階 5: 最終 STL/3MF 出力
 - `/hinged-lid` — **横断(機構特化)**: ヒンジ蓋ケースの closure 詳細を埋める
+- `/style` — **横断(意匠)**: 意匠テーマ(futuristic / minimal / fancy 等)+ 表面パターン + 角の処理を `case-config.yaml` の `style:` セクションに翻訳
 
 > 💡 **GitHub にプッシュする場合**: GitHub UI でリポジトリを作るときは
 > 「Add a license」のみ選び、「Initialize with a README」「.gitignore 追加」は
@@ -131,7 +132,7 @@ cp -R examples/bike-navi-mvp/input/. input/   # features 7 種の総合例
 - `tests/` — pytest による smoke test
 - `.claude/`:
   - `settings.json` — permissions + hooks(自動ゲート執行)
-  - `skills/` — 7 つの skill 定義(lead / measure / design / review-fix / fit-check / export / hinged-lid)
+  - `skills/` — 8 つの skill 定義(lead / measure / design / review-fix / fit-check / export / hinged-lid / style)
   - `agents/` — サブエージェント(cad-validator, slicer-advisor)
   - `rules/` — path-scoped ルール 11 種(constitution / cad-conventions / yaml-style / print-safety / closures-catalog / features-catalog / hardware-catalog / materials-catalog / measurement-feedback / print-orientation-reasoning / report-style)
   - `hooks/` — SessionStart / PostToolUse / Stop の自動執行スクリプト

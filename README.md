@@ -63,11 +63,11 @@ Claude が `project-config.yaml` を編集し、`pip install -e .` 等の環境�
 ## いま入っているもの
 
 ```text
- 7 skills   /lead, /measure, /design, /review-fix, /fit-check,
-            /export, /hinged-lid
+ 8 skills   /lead, /measure, /design, /review-fix, /fit-check,
+            /export, /hinged-lid, /style
  5 closures snap_fit, screws, magnetic, snap_lip_with_hinge, hinge_lever
- 6 features ventilation, cable_port, display_window, button_cutout,
-            mounting_bracket, body_text
+ 7 features ventilation, cable_port, display_window, button_cutout,
+            mounting_bracket, body_text, decorative_pattern
  5 materials pla, pla_plus, petg, abs, tpu (機構別 fit_clearance 推奨範囲付き)
  2 agents   cad-validator, slicer-advisor
 20 pitfalls P1-P20(印刷向き / オーバーハング / 嵌合 / 物理ループ /
@@ -184,7 +184,7 @@ URL は寸法情報の出所として便利ですが、商品ページの寸法�
 ## 📚 さらに知る
 
 - [`case-blueprint/README.md`](case-blueprint/README.md) — テンプレート本体の利用ガイド
-- [`case-blueprint/.claude/skills/`](case-blueprint/.claude/skills/) — 7 skill の SKILL.md
+- [`case-blueprint/.claude/skills/`](case-blueprint/.claude/skills/) — 8 skill の SKILL.md
 - [`case-blueprint/.claude/pitfalls.md`](case-blueprint/.claude/pitfalls.md) — 20 件の落とし穴(P1-P20)
 - [`case-blueprint/.claude/rules/`](case-blueprint/.claude/rules/) — closures / features / materials / hardware カタログ
 - [`constitution.md`](constitution.md) — 5 不変原則(変更プロトコル付き)

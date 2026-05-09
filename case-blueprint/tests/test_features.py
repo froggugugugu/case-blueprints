@@ -19,6 +19,7 @@ from case_blueprint.features import (
     button_cutout,
     mounting_bracket,
     body_text,
+    decorative_pattern,
 )
 
 
@@ -52,6 +53,7 @@ class TestRegistry:
     @pytest.mark.parametrize("ftype", [
         "ventilation", "cable_port", "display_window",
         "button_cutout", "mounting_bracket", "body_text",
+        "decorative_pattern",
     ])
     def test_registered(self, ftype):
         assert ftype in HANDLERS
@@ -336,6 +338,60 @@ class TestBodyTextValidate:
         )
 
 
+# ===== decorative_pattern validate =====
+
+
+class TestDecorativePatternValidate:
+    def test_side_required(self):
+        with pytest.raises(AssertionError, match="side が必須"):
+            decorative_pattern.validate_decorative_pattern({"pattern": "hex_grid"}, {})
+
+    def test_pattern_unsupported(self):
+        with pytest.raises(AssertionError, match="hex_grid"):
+            decorative_pattern.validate_decorative_pattern(
+                {"side": "+Z", "pattern": "dot_pattern"}, {}
+            )
+
+    def test_depth_zero_rejected(self):
+        with pytest.raises(AssertionError, match="0 以外"):
+            decorative_pattern.validate_decorative_pattern(
+                {"side": "+Z", "depth": 0.0}, {}
+            )
+
+    def test_depth_too_thin(self):
+        with pytest.raises(AssertionError, match="0.2mm"):
+            decorative_pattern.validate_decorative_pattern(
+                {"side": "+Z", "depth": 0.1}, {}
+            )
+
+    def test_depth_too_deep(self):
+        with pytest.raises(AssertionError, match="2.0mm"):
+            decorative_pattern.validate_decorative_pattern(
+                {"side": "+Z", "depth": 3.0}, {}
+            )
+
+    def test_density_out_of_range(self):
+        with pytest.raises(AssertionError, match="density"):
+            decorative_pattern.validate_decorative_pattern(
+                {"side": "+Z", "density": 1.5}, {}
+            )
+
+    def test_negative_depth_emboss_valid(self):
+        decorative_pattern.validate_decorative_pattern(
+            {"side": "+Z", "pattern": "hex_grid", "depth": -0.4, "density": 0.3}, {}
+        )
+
+    def test_valid_hex_grid(self):
+        decorative_pattern.validate_decorative_pattern(
+            {"side": "+Z", "pattern": "hex_grid", "depth": 0.4, "density": 0.35}, {}
+        )
+
+    def test_valid_linear_groove(self):
+        decorative_pattern.validate_decorative_pattern(
+            {"side": "+Z", "pattern": "linear_groove", "depth": 0.5, "density": 0.3}, {}
+        )
+
+
 # ===== CadQuery 実体テスト(オプショナル)=====
 
 
@@ -449,12 +505,8 @@ class TestMountingBracketGeometry:
         v = result.val().Volume()
         assert v > box_volume_initial
 
-    def test_ribs_built_from_resolved_target_bbox(self, box, box_volume_initial):
-        """target → bbox 自動解決経由でも ribs が生成される。
-
-        box は原点中心 80×60×30。base_z=15(box の zmax)を指定し、
-        リブを上に立てて box 体積より増えることで union の発生を確認。
-        """
+    def test_ribs_built_from_resolved_target_bbox_in_class(self, box, box_volume_initial):
+        """target → bbox 自動解決経由でも ribs が生成される(MountingBracket の試験)。"""
         feats = [{"type": "mounting_bracket", "style": "ribs",
                   "target": "device", "height": 4.0, "width": 2.0,
                   "base_z": 15.0}]
@@ -462,8 +514,39 @@ class TestMountingBracketGeometry:
                  "dimensions": {"width": 40, "depth": 30, "height": 10},
                  "tolerance": 0}]
         feats = mounting_bracket.resolve_targets(feats, objs)
-        # computed.target_bbox が詰まっていることを直接確認(自動解決の証拠)
         assert feats[0]["computed"]["target_bbox"]["width"] == 40.0
         result = apply_all(box, feats, {})
-        # 4 リブが box の上に立つので volume が増える(2 × 2 × 4 × 4 リブ = 64 mm³)
         assert result.val().Volume() > box_volume_initial
+
+
+class TestDecorativePatternGeometry:
+    def test_hex_grid_engraving_decreases_volume(self, box, box_volume_initial):
+        result = apply_all(box, [
+            {"type": "decorative_pattern", "side": "+Z",
+             "pattern": "hex_grid", "depth": 0.4, "density": 0.35,
+             "pitch": 8.0}
+        ], {})
+        v = result.val().Volume()
+        # 凹彫り → 体積減少
+        assert v < box_volume_initial
+        # 80×60 面、margin=5 → 70×50 域、密度 0.35、深さ 0.4
+        # 大雑把に 70*50*0.4*0.35 = 490 mm³ 程度の予想
+        diff = box_volume_initial - v
+        assert 100 < diff < 1000
+
+    def test_hex_grid_emboss_increases_volume(self, box, box_volume_initial):
+        result = apply_all(box, [
+            {"type": "decorative_pattern", "side": "+Z",
+             "pattern": "hex_grid", "depth": -0.4, "density": 0.35}
+        ], {})
+        # 凸 emboss → 体積増加
+        assert result.val().Volume() > box_volume_initial
+
+    def test_linear_groove_decreases_volume(self, box, box_volume_initial):
+        result = apply_all(box, [
+            {"type": "decorative_pattern", "side": "+Z",
+             "pattern": "linear_groove", "depth": 0.5,
+             "pitch": 4.0, "groove_width": 1.5}
+        ], {})
+        v = result.val().Volume()
+        assert v < box_volume_initial

@@ -60,3 +60,4 @@ from . import display_window  # noqa: E402,F401
 from . import button_cutout  # noqa: E402,F401
 from . import mounting_bracket  # noqa: E402,F401
 from . import body_text  # noqa: E402,F401
+from . import decorative_pattern  # noqa: E402,F401

@@ -1,6 +1,6 @@
 ---
 name: lead
-description: ケース設計プロジェクトを進行するプロジェクトリード(PdM 相当)。5 段階ワークフロー(measure / design / review-fix / fit-check / export)+ 機構特化の横断スキル(hinged-lid)を統合し、現状把握 → 次の一手の提示 → skill 起動 を反復する。利用者の意図を都度確認し、方針転換を柔軟に受け入れる。
+description: ケース設計プロジェクトを進行するプロジェクトリード(PdM 相当)。5 段階ワークフロー(measure / design / review-fix / fit-check / export)+ 横断スキル(hinged-lid 機構特化、style 意匠)を統合し、現状把握 → 次の一手の提示 → skill 起動 を反復する。利用者の意図を都度確認し、方針転換を柔軟に受け入れる。
 when_to_use: 「次どうする」「進捗教えて」「どこから始める」「設計プロジェクトの状態確認」のとき。skill を直接呼ばず、状態判定+次手提示で対話を反復する。
 allowed-tools: Read, Glob, Bash(.venv/bin/python -m case_blueprint.state), Bash(test *), Bash(ls *), Bash(stat *)
 model: inherit
@@ -88,6 +88,7 @@ skill 実行が終わったら、利用者が「終わり」「もう良い」�
 | 「これ違う、コンセプト変えたい」 | `/review-fix` で大規模変更 / または `/design` 再生成を相談 |
 | 「印刷したらハマらない」 | `/review-fix` 起動(必要に応じ `/fit-check` も) |
 | 「ヒンジ蓋にしたい」「レバーラッチにしたい」 | `/hinged-lid init` 起動 |
+| 「未来感を出したい」「ファンシーに」「角を丸めて」「アニメ ○○ のイメージで」 | `/style theme <name>` または `/style refine` 起動 |
 | 「もう良い、終わる」 | 状態サマリーを出して終了 |
 | 「今どこ?」「進捗教えて」 | 状態を表で提示し、選択肢を出す |
 

@@ -97,6 +97,7 @@ generator.py は `from case_blueprint import features` するだけで自動 reg
 | `button_cutout` | `features/button_cutout.py` | `gloves_compatible` で手袋越し下限ガード |
 | `mounting_bracket` | `features/mounting_bracket.py` | `style: ribs / m5_screw_holes / ram_ball_b`(ribs は `target` object id から bbox 自動解決、`resolve_targets()` を generator が呼ぶ) |
 | `body_text` | `features/body_text.py` | フォントは `input/fonts/` にローカル配置 |
+| `decorative_pattern` | `features/decorative_pattern.py` | 意匠用の凹彫り or 凸 emboss(`hex_grid` / `linear_groove`)。`/style` skill が theme から自動配置、または features[] に直接書く |
 
 これら以外は **未実装**。利用者プロジェクト固有の type は generator.py 末尾で
 `@register("<type>")` する形で使い切る。汎用化したくなったら src/features/
