@@ -322,13 +322,13 @@ from case_blueprint.feature_registry import apply_all
 from pathlib import Path
 import cadquery as cq
 
-from case_blueprint import closures, features, loader  # 副作用 import で register
+from case_blueprint import closures, features, loader, silhouettes  # 副作用 import で register
 from case_blueprint.feature_registry import apply_all
 from case_blueprint.geometry import (
-    internal_bbox_stacked, internal_bbox_side_by_side, external_bbox,
+    internal_bbox_stacked, internal_bbox_side_by_side,
 )
 
-del features  # F401 抑制(import 副作用のみ目的)
+del features, silhouettes  # F401 抑制(import 副作用のみ目的)
 
 
 def _internal_dims(objects, case_config, layout):
@@ -339,24 +339,6 @@ def _internal_dims(objects, case_config, layout):
         object_clearance=case_config.get("internal", {}).get("object_clearance", 1.0),
         z_margin=case_config.get("internal", {}).get("z_margin", 0.0),
     )
-
-
-def _build_blank_body(internal, walls):
-    """壁付き本体の素体(蓋なし)。closure が後段でリップ・ヒンジを追加する。"""
-    eb = external_bbox(internal, wall_thickness=walls.get("thickness", 2.0))
-    outer = cq.Workplane("XY").box(eb.width, eb.depth, eb.height)
-    inner = (
-        cq.Workplane("XY")
-        .workplane(offset=walls.get("bottom_thickness", walls.get("thickness", 2.0)) / 2)
-        .box(internal.width, internal.depth, internal.height)
-    )
-    return outer.cut(inner)
-
-
-def _build_blank_lid(internal, lid_cfg, walls):
-    """蓋の平板素体。closure 側でリップ等が貼られる。"""
-    eb = external_bbox(internal, wall_thickness=walls.get("thickness", 2.0))
-    return cq.Workplane("XY").box(eb.width, eb.depth, lid_cfg.get("thickness", 2.0))
 
 
 def _stack_lid_on_body(body, lid):
@@ -377,8 +359,17 @@ def main():
 
     layout = case_spec["case"].get("layout", {})
     internal = _internal_dims(objects, case_config, layout)
-    body = _build_blank_body(internal, case_config.get("walls", {}))
-    lid = _build_blank_lid(internal, case_config.get("lid", {}), case_config.get("walls", {}))
+
+    # silhouette ディスパッチ(rectangular / rounded / hex / capsule)
+    style_cfg = case_config.get("style", {})
+    silhouette_name = style_cfg.get("silhouette", "rectangular")
+    blanks = silhouettes.build(
+        silhouette_name, internal,
+        case_config.get("walls", {}),
+        case_config.get("lid", {}),
+        style_cfg,
+    )
+    body, lid = blanks["body_blank"], blanks["lid_blank"]
     lid = _stack_lid_on_body(body, lid)   # 物理配置(closure の前に必ず実行)
 
     # closure dispatcher(snap_fit / hinge_lever / ...)
