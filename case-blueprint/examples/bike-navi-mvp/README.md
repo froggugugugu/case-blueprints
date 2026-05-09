@@ -55,14 +55,12 @@ claude
 
 ## このサンプルの限界(Phase 2 で改善予定)
 
-- **1 オブジェクト構成**: ディスプレイ・ラズパイ・GPS の内部レイアウトを
-  3D で配置する仕組み(`layout: manual` + `objects[].position`)が未実装。
-  現状はそれら一式を 1 ボックスとして bbox 計算する近似
-- **ガスケット溝の実装**: case-config.yaml に書いてあるが、closures/screws の
-  実装にまだ反映されていない(yaml レベルの宣言まで)。/fit-check では
-  検証されない
+- **1 オブジェクト構成**: 本サンプル自体は単一ボックスだが、複数 objects の
+  3D 配置(`layout: manual` + `objects[].position[x, y, z]`)は src 側で実装済。
+  実案件ではディスプレイ・ラズパイ・GPS を別 object として置ける
 - **mounting_bracket の clip / screw_post**: ribs / m5_screw_holes /
-  ram_ball_b の 3 style のみ実装済み
+  ram_ball_b の 3 style のみ実装済み(他 style は generator.py 末尾で
+  `@register` 追記する形で拡張)
 
 ## 関連
 

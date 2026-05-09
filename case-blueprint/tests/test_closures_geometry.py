@@ -120,6 +120,43 @@ class TestScrewsCornerPositions:
             screws.corner_positions(100, 60, 5, 3)
 
 
+class TestGasketGrooveValidate:
+    """closures/screws の gasket_groove(P18 防水)。"""
+    def test_undefined_passes(self):
+        screws.validate_gasket_groove({}, {"thickness": 2.4})  # 未定義は OK
+
+    def test_width_must_be_positive(self):
+        with pytest.raises(AssertionError, match="width"):
+            screws.validate_gasket_groove(
+                {"gasket_groove": {"width": 0, "depth": 1.5}},
+                {"thickness": 2.4},
+            )
+
+    def test_depth_exceeds_wall_thickness(self):
+        # width+2*margin <= wall は満たし、depth >= wall で引っかける
+        with pytest.raises(AssertionError, match="貫通"):
+            screws.validate_gasket_groove(
+                {"gasket_groove": {"width": 1.0, "depth": 3.0,
+                                   "margin_from_inner_edge": 0.3}},
+                {"thickness": 2.8},
+            )
+
+    def test_width_plus_margin_exceeds_wall(self):
+        with pytest.raises(AssertionError, match="壁厚"):
+            screws.validate_gasket_groove(
+                {"gasket_groove": {"width": 3.0, "depth": 1.5,
+                                   "margin_from_inner_edge": 1.0}},
+                {"thickness": 2.4},
+            )
+
+    def test_valid(self):
+        screws.validate_gasket_groove(
+            {"gasket_groove": {"width": 2.0, "depth": 1.5,
+                               "margin_from_inner_edge": 0.3}},
+            {"thickness": 2.8},
+        )
+
+
 class TestMagneticValidate:
     def test_pocket_depth_vs_magnet_thickness(self):
         with pytest.raises(AssertionError, match="pocket_depth"):
@@ -343,6 +380,30 @@ class TestScrewsGeometry:
             hardware={"closure": {"fastener": {"diameter": 3.0, "head_diameter": 5.6, "head_height": 1.86}}},
         )
         assert lid2.val().Volume() < v0
+
+    def test_gasket_groove_undefined_no_op(self):
+        """gasket_groove 未定義なら body は変化なし"""
+        body = _make_body()
+        v0 = body.val().Volume()
+        body2 = screws.build_gasket_groove(body, {}, {"thickness": 2.4})
+        assert body2.val().Volume() == v0
+
+    def test_gasket_groove_decreases_volume(self):
+        """gasket_groove 定義時は本体上端面に溝が刻まれて体積が減る"""
+        body = _make_body()
+        v0 = body.val().Volume()
+        body2 = screws.build_gasket_groove(
+            body,
+            {"gasket_groove": {"width": 2.0, "depth": 1.5,
+                               "margin_from_inner_edge": 0.3}},
+            {"thickness": 2.8},
+        )
+        v1 = body2.val().Volume()
+        assert v1 < v0
+        # 周回 2mm × 深 1.5mm の矩形リング溝。本体内寸・margin との位置関係で
+        # 周長が変わる(_make_body の既定で 700-1000 mm³ の範囲)
+        diff = v0 - v1
+        assert 500 < diff < 1200
 
 
 @requires_cadquery

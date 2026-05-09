@@ -160,6 +160,106 @@ def build_screw_bosses(body: Any, closure_cfg: dict, hardware: dict) -> Any:
     return body
 
 
+def validate_gasket_groove(lid_cfg: dict, walls_cfg: dict) -> None:
+    """lid.gasket_groove(O-リング受け矩形溝)の妥当性を検査。
+
+    P18(防水)対策として、本体上端面の周回に矩形溝を切る前提で寸法ガード:
+    - width / depth が正
+    - 溝が壁内に収まる(width + 2*margin <= wall_thickness 程度)
+    - depth は壁高さに対して安全(depth < wall_thickness)
+    """
+    g = (lid_cfg or {}).get("gasket_groove")
+    if g is None:
+        return  # 未定義は許容(防水不要なケース)
+    width = float(g.get("width", 0))
+    depth = float(g.get("depth", 0))
+    assert width > 0, f"gasket_groove.width={width} は正の値"
+    assert depth > 0, f"gasket_groove.depth={depth} は正の値"
+    margin = float(g.get("margin_from_inner_edge", 0.5))
+    assert margin >= 0, f"gasket_groove.margin_from_inner_edge={margin} は 0 以上"
+    wall_t = float(walls_cfg.get("thickness", 2.0))
+    assert width + 2 * margin <= wall_t + 0.01, (
+        f"gasket_groove width+2*margin = {width + 2 * margin}mm が壁厚 "
+        f"{wall_t}mm を超える。壁厚を上げるか width / margin を縮めてください"
+    )
+    assert depth < wall_t, (
+        f"gasket_groove.depth={depth}mm >= 壁厚 {wall_t}mm。"
+        f"溝が壁を貫通します"
+    )
+
+
+def make_gasket_groove_cutter(
+    *,
+    body_outer_x: float,
+    body_outer_y: float,
+    wall_thickness: float,
+    body_top_z: float,
+    width: float,
+    depth: float,
+    margin_from_inner_edge: float = 0.5,
+):
+    """本体上端面に切る周回矩形溝(リング状)の cutter solid を返す。
+
+    溝の中心線は **内寸境界の外側** `margin_from_inner_edge + width/2` に置く。
+    body から `cut(cutter)` して使う。
+    """
+    import cadquery as cq
+
+    inner_x = body_outer_x - 2 * wall_thickness
+    inner_y = body_outer_y - 2 * wall_thickness
+    if inner_x <= 0 or inner_y <= 0:
+        raise ValueError(
+            f"本体内寸が非正: outer=({body_outer_x}, {body_outer_y}) "
+            f"wall={wall_thickness}"
+        )
+
+    cl_offset = margin_from_inner_edge + width / 2
+    half_outer_x = inner_x / 2 + cl_offset + width / 2
+    half_outer_y = inner_y / 2 + cl_offset + width / 2
+    half_inner_x = inner_x / 2 + cl_offset - width / 2
+    half_inner_y = inner_y / 2 + cl_offset - width / 2
+
+    outer_w = half_outer_x * 2
+    outer_h = half_outer_y * 2
+    inner_w = half_inner_x * 2
+    inner_h = half_inner_y * 2
+
+    cutter = (
+        cq.Workplane("XY")
+        .workplane(offset=body_top_z - depth)
+        .rect(outer_w, outer_h)
+        .rect(inner_w, inner_h)
+        .extrude(depth)
+    )
+    return cutter
+
+
+def build_gasket_groove(body: Any, lid_cfg: dict, walls_cfg: dict) -> Any:
+    """lid.gasket_groove が定義されていれば本体上端面に切る、無ければ素通し。
+
+    溝は本体側に掘るのが定石(蓋を閉じたときに O-リングが圧縮される)。
+    """
+    g = (lid_cfg or {}).get("gasket_groove")
+    if g is None:
+        return body
+
+    bb = body.val().BoundingBox()
+    wall_t = float(walls_cfg.get("thickness", 2.0))
+    width = float(g["width"])
+    depth = float(g["depth"])
+    margin = float(g.get("margin_from_inner_edge", 0.5))
+
+    cutter = make_gasket_groove_cutter(
+        body_outer_x=bb.xlen, body_outer_y=bb.ylen,
+        wall_thickness=wall_t, body_top_z=bb.zmax,
+        width=width, depth=depth, margin_from_inner_edge=margin,
+    )
+    cx = (bb.xmin + bb.xmax) / 2
+    cy = (bb.ymin + bb.ymax) / 2
+    cutter = cutter.translate((cx, cy, 0))
+    return body.cut(cutter)
+
+
 def build_screw_holes(lid: Any, closure_cfg: dict, hardware: dict) -> Any:
     """蓋に貫通穴 + countersink/counterbore を切る。"""
     bb = lid.val().BoundingBox()
@@ -207,8 +307,12 @@ def build_screws_closure(
     assert_lid_axis_supported(case_spec)
     hw = resolve_screws_hardware(case_config)
     validate_screws(case_config, hw)
+    lid_cfg = case_config.get("lid", {})
+    walls_cfg = case_config.get("walls", {})
+    validate_gasket_groove(lid_cfg, walls_cfg)
     closure_cfg = case_config.get("closure", {}).get("screws", {})
     body = build_screw_bosses(body, closure_cfg, hw)
+    body = build_gasket_groove(body, lid_cfg, walls_cfg)  # P18 防水(任意)
     lid = build_screw_holes(lid, closure_cfg, hw)
     return {
         "case-body": body,
