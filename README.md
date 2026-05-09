@@ -1,31 +1,50 @@
 # case-blueprints
 
 > 収納したい機器の **商品ページ URL** や **ノギスでの実測値**、自由記述メモを
-> Claude に渡すと、3D プリント可能な **ケース設計を生成・反復できる**
-> Claude Code 用テンプレート。
+> Claude Code に渡すと、3D プリント可能な **ケース設計を生成・反復できる**
+> テンプレート。
 > 採寸 → 仕様統合 → CadQuery 生成 → 可視化レビュー → 嵌合点検 → 印刷ファイル
 > までの 5 段階を、ヒューマンインザループで回す前提で設計されている。
 
-**前提**: [Claude Code](https://docs.claude.com/en/docs/claude-code) と Python 3.11+ が `PATH` にインストール済みであること。
+**前提条件**: [Claude Code](https://docs.claude.com/en/docs/claude-code)、Git、Python 3.11+ が `PATH` にインストール済みであること(これらの導入手順は本書の対象外)。
 
 ---
 
-## 5 行で動かす
+## 最短手順 — `/lead` まで
 
 ```bash
 git clone https://github.com/froggugugugu/case-blueprints.git
 bash case-blueprints/case-blueprint/setup.sh ./my-case
-cd ./my-case && python3 -m venv .venv && .venv/bin/pip install -e .
-.venv/bin/claude   # → プロンプトで /lead を呼んで対話開始
+cd ./my-case && claude
 ```
 
-すぐに動く参照を見たい場合は、起動前に `examples/` から 1 件をコピー:
+Claude Code 起動後、最初のプロンプトは **2 段階** で投げる想定:
 
-```bash
-cp -R ./my-case/examples/minimal/input/. ./my-case/input/        # snap_fit 名刺ケース(最小)
-# または
-cp -R ./my-case/examples/bike-navi-mvp/input/. ./my-case/input/  # features 7 種の総合例
+**段階 1.** 環境設定(`project-config.yaml` を Claude に書かせる):
+
 ```
+私のプリンタは Bambu Lab P1S(造形 256×256×256mm、ノズル 0.4mm)、
+材料は PETG をメインに使います。
+project-config.yaml を埋めて、Python 環境も用意してください。
+```
+
+Claude が `project-config.yaml` を編集し、`pip install -e .` 等の環境構築を
+提案 → 承認すれば cadquery 含む依存が入る。
+
+**段階 2.** プロジェクト開始(`/lead` で進行管理 + 対話):
+
+```
+/lead
+```
+
+`/lead` が現状を把握(input/objects/ が空など)→ 次の一手を提示。
+ここで採寸対象の **商品ページ URL** や **実測値**、用途メモを順に貼れば、
+`/measure` → `/design` → `/review-fix` … と対話的に進む。
+
+> 動く参照例から始める場合は、`claude` 起動前に
+> `cp -R ./my-case/examples/minimal/input/. ./my-case/input/`(snap_fit
+> 名刺ケース)または `cp -R ./my-case/examples/bike-navi-mvp/input/. ./my-case/input/`
+> (features 7 種の総合例)を実行すると、`/design` から確認できる。
 
 ---
 

@@ -29,66 +29,62 @@
 
 ---
 
-## セットアップ
+## セットアップ — `/lead` まで
 
-> 💡 **GitHub UI でリポジトリを作成する場合の注意**
-> - ✅ 「Add a license」は選んで OK(MIT, Apache-2.0 等。`setup.sh` が保持します)
-> - ❌ 「Initialize with a README」は **選ばない**(`setup.sh` が用意します)
-> - ❌ `.gitignore` も **追加しない**(`setup.sh` が用意します)
->
-> ローカルで先に `setup.sh` を実行してから `git remote add` で GitHub に push する手順なら、上記制約はありません。
-
-### 1. プロジェクト設定の編集
-
-最初に `project-config.yaml` を開き、プリンタ機種・材料・設計ルールを記入してください:
-
-```yaml
-print_settings:
-  printer_bed: [220, 220, 250]    # ご使用のプリンタの造形領域
-  nozzle_diameter: 0.4
-  default_material: PLA
-```
-
-### 2. Python 環境の準備
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"            # cadquery + pytest + ruff
-```
-
-### 3. Git 初期化(推奨)
-
-`/review-fix` skill が `case-config.yaml` の差分を検出するために Git を使います。
-
-```bash
-git init
-git add .
-git commit -m "Initial: case-blueprints テンプレートから生成"
-```
-
-`.gitignore` は `setup.sh` で展開済みなので、バイナリ派生物(STEP/STL/3MF)は自動的に除外されます。
-
-### 4.(任意)最小サンプルで動作確認
-
-初めて触る場合は `examples/minimal/`(snap_fit の名刺ケース)を `input/` にコピーすると、
-`/measure` を飛ばして `/design` から試せます:
-
-```bash
-cp -R examples/minimal/input/. input/
-```
-
-詳細は `examples/minimal/README.md` を参照。慣れたら `/measure` から自前のオブジェクトで始めてください。
-
-### 5. Claude Code 起動
+最短手順は **`claude` を起動するだけ**。`project-config.yaml` の編集 /
+Python venv の作成 / git 初期化はすべて Claude にプロンプトで依頼できます。
 
 ```bash
 claude
 ```
 
-起動後、以下の skill を使用します:
+起動後、以下の **2 つのプロンプトを順に投げる** だけで `/lead` に到達します。
 
-- `/lead` — **プロジェクトリード(PdM 相当)**: 状態判定 + 次の一手を提示(対話で進める場合の入口)
+### プロンプト 1 — 環境構築を Claude に依頼
+
+```
+project-config.yaml を埋めて、Python 環境の構築(venv + pip install -e .)と
+git 初期化までお願いします。
+プリンタは <機種>(造形 <X×Y×Z mm>、ノズル <径> mm)、
+材料は <PETG / PLA / PLA+ / ABS / TPU> をメインに使います。
+```
+
+例:
+
+```
+project-config.yaml を埋めて、Python 環境の構築と git 初期化までお願いします。
+プリンタは Bambu Lab P1S(造形 256×256×256mm、ノズル 0.4mm)、
+材料は PETG をメインに使います。
+```
+
+Claude が `project-config.yaml` を編集 → `venv` 作成 → `pip install -e .`
+→ `git init` までを Bash ツール経由で実行(各操作の前に許可プロンプトが
+出るので承認)。
+
+### プロンプト 2 — `/lead` でプロジェクト開始
+
+```
+/lead
+```
+
+`/lead` が現状を把握(input/objects/ が空など)→ 次の一手を提示。
+ここで採寸対象の **商品ページ URL** や **ノギス実測値**、用途メモを
+順に貼っていけば、`/measure` → `/design` → `/review-fix` … と対話的に進みます。
+
+### (任意)最小サンプルで動作確認
+
+`/measure` を飛ばして `/design` から試したい場合は、`claude` 起動前か
+`/lead` を呼ぶ前に examples をコピー:
+
+```bash
+cp -R examples/minimal/input/. input/         # snap_fit 名刺ケース
+# または
+cp -R examples/bike-navi-mvp/input/. input/   # features 7 種の総合例
+```
+
+### 利用可能な skill 一覧
+
+- `/lead` — **プロジェクトリード(PdM 相当)**: 状態判定 + 次の一手を提示
 - `/measure` — 段階 1: オブジェクトを対話的に採寸
 - `/design` — 段階 2-3: 要件統合と設計生成
 - `/review-fix` — 段階 4: フィードバックを反映
@@ -96,7 +92,10 @@ claude
 - `/export` — 段階 5: 最終 STL/3MF 出力
 - `/hinged-lid` — **横断(機構特化)**: ヒンジ蓋ケースの closure 詳細を埋める
 
-おすすめは `/lead` から始める方法。「次に何をすべきか」を考えずに進められます。
+> 💡 **GitHub にプッシュする場合**: GitHub UI でリポジトリを作るときは
+> 「Add a license」のみ選び、「Initialize with a README」「.gitignore 追加」は
+> **選ばない**(`setup.sh` が用意済みのため)。先にローカルで作業して
+> `git remote add` で push する手順なら制約なし。
 
 ---
 
