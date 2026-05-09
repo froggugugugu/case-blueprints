@@ -188,6 +188,9 @@ def _build_parts(cfg):
         cq.Workplane("XY").box(internal.width, internal.depth, internal.height)
     )
     lid = cq.Workplane("XY").box(eb.width, eb.depth, case_config.get("lid", {}).get("thickness", 2.0))
+    # 蓋を body 上に乗せる(generator.py と同じ手順で「閉じた状態」を作る)
+    body_zmax = body.val().BoundingBox().zmax
+    lid = lid.translate((0, 0, body_zmax + lid.val().BoundingBox().zlen / 2))
     method = case_spec["case"]["closure"]["method"]
     parts = closures.build(method, body, lid, case_spec, case_config)
     return parts

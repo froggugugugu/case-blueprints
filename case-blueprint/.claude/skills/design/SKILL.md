@@ -359,6 +359,18 @@ def _build_blank_lid(internal, lid_cfg, walls):
     return cq.Workplane("XY").box(eb.width, eb.depth, lid_cfg.get("thickness", 2.0))
 
 
+def _stack_lid_on_body(body, lid):
+    """蓋を本体の上に物理的に配置する(lid_axis="+Z" 既定)。
+
+    CadQuery の box() は原点中心。素体のままだと body と lid が同じ Z 範囲を
+    占有して closure 前から CAD 干渉が発生する(/fit-check D が ❌ になる原因)。
+    body の zmax に lid の zmin が乗るよう translate する。
+    """
+    body_zmax = body.val().BoundingBox().zmax
+    lid_h = lid.val().BoundingBox().zlen
+    return lid.translate((0, 0, body_zmax + lid_h / 2))
+
+
 def main():
     cfg = loader.load_all()
     case_spec, case_config, objects = cfg["case_spec"], cfg["case_config"], cfg["objects"]
@@ -367,6 +379,7 @@ def main():
     internal = _internal_dims(objects, case_config, layout)
     body = _build_blank_body(internal, case_config.get("walls", {}))
     lid = _build_blank_lid(internal, case_config.get("lid", {}), case_config.get("walls", {}))
+    lid = _stack_lid_on_body(body, lid)   # 物理配置(closure の前に必ず実行)
 
     # closure dispatcher(snap_fit / hinge_lever / ...)
     method = case_spec["case"]["closure"]["method"]
