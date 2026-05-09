@@ -126,16 +126,18 @@ claude
 - `pyproject.toml` — Python 依存とツール設定
 - `CLAUDE.md` — Claude Code 起動時に自動ロードされるガイド(`@` import で関連ドキュメント連結)
 - `schemas/` — 機械可読 YAML スキーマ(JSON-Schema 2020-12)
-- `src/case_blueprint/` — 共通実装(loader / geometry / validators / feature_registry / state / closures)
-- `src/fonts/` — サードパーティフォント(`body_text` feature 等で使用)
+- `src/case_blueprint/` — 共通実装(loader / geometry / validators / fit_check / feature_registry / materials / state / closures/ / features/ / data/materials/)
+- `input/fonts/` — サードパーティフォント(`body_text` feature 等で使用、利用者がローカルに配置)
+- `examples/` — 動く参照例(minimal / bike-navi-mvp)
 - `tests/` — pytest による smoke test
 - `.claude/`:
   - `settings.json` — permissions + hooks(自動ゲート執行)
-  - `skills/` — 7 つの skill 定義
+  - `skills/` — 7 つの skill 定義(lead / measure / design / review-fix / fit-check / export / hinged-lid)
   - `agents/` — サブエージェント(cad-validator, slicer-advisor)
-  - `rules/` — path-scoped ルール(cad-conventions, yaml-style, print-safety)
+  - `rules/` — path-scoped ルール 11 種(constitution / cad-conventions / yaml-style / print-safety / closures-catalog / features-catalog / hardware-catalog / materials-catalog / measurement-feedback / print-orientation-reasoning / report-style)
   - `hooks/` — SessionStart / PostToolUse / Stop の自動執行スクリプト
-  - `pitfalls.md` — 17 項の落とし穴
+  - `templates/` — 物理ループ用 yaml 雛形
+  - `pitfalls.md` — 20 項の落とし穴(P1-P20)
   - `quality-gates.md` — 5 段階ゲート + 横断スキル
 
 ---
@@ -146,10 +148,10 @@ claude
 
 ### 1. ライセンスファイルを併置
 
-`src/fonts/` にフォントを置くときは、必ずライセンス情報を併置:
+`input/fonts/` にフォントを置くときは、必ずライセンス情報を併置:
 
 ```
-src/fonts/
+input/fonts/
 ├── LICENSE-<font-name>.txt      # フォントのライセンス本文(必須、追跡対象)
 └── <font-name>.ttf              # フォント本体(配布可否は要確認)
 ```
@@ -160,24 +162,28 @@ src/fonts/
 
 ```
 # .gitignore に追加
-src/fonts/*.ttf
-src/fonts/*.otf
-src/fonts/*.woff
-src/fonts/*.woff2
+input/fonts/*.ttf
+input/fonts/*.otf
+input/fonts/*.woff
+input/fonts/*.woff2
 ```
 
-利用者には「フォント本体を個別にダウンロードして `src/fonts/` に配置してください」と案内。
+利用者には「フォント本体を個別にダウンロードして `input/fonts/` に配置してください」と案内。
 
 ### 3. フォント不在時のハンドリング
 
-`generator.py` がフォントを参照する場合(`body_text` feature 等)、ファイル不在時は分かりやすいエラーで案内する:
+`body_text` feature の実装(`src/case_blueprint/features/body_text.py`)が
+`validate_body_text()` でフォントの存在を検査します。フォント不在時は
+AssertionError で利用者に分かりやすく案内:
 
 ```python
-font_path = Path("src/fonts") / cfg["body_text"]["font_file"]
-if not font_path.exists():
-    raise FileNotFoundError(
-        f"フォント {font_path} が見つかりません。"
-        f"src/fonts/LICENSE-*.txt を参照してダウンロードしてください。"
+# src/case_blueprint/features/body_text.py(抜粋)
+fdir = font_dir or feature.get("font_dir", "input/fonts")
+fpath = Path(fdir) / feature["font_file"]
+if not fpath.exists():
+    raise AssertionError(
+        f"body_text: フォント {fpath} が見つかりません。"
+        f"input/fonts/ にダウンロードして配置してください"
     )
 ```
 

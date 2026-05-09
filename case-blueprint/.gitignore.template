@@ -30,8 +30,8 @@ Thumbs.db
 *.FCStd1
 
 # Third-party fonts (配布禁止のものが多い、ライセンスファイルのみ追跡)
-# 利用する場合は src/fonts/ に個別ダウンロード、LICENSE-<name>.txt を併置
-src/fonts/*.ttf
-src/fonts/*.otf
-src/fonts/*.woff
-src/fonts/*.woff2
+# 利用する場合は input/fonts/ に個別ダウンロード、LICENSE-<name>.txt を併置
+input/fonts/*.ttf
+input/fonts/*.otf
+input/fonts/*.woff
+input/fonts/*.woff2
