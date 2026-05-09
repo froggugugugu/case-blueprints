@@ -388,6 +388,9 @@ def main():
 
     # features を side で本体/蓋に振り分けて適用
     feats = case_spec["case"].get("features") or []
+    # mounting_bracket(ribs)等で target object id を寸法に解決
+    from case_blueprint.features.mounting_bracket import resolve_targets
+    feats = resolve_targets(feats, objects)
     body = apply_all(body, [f for f in feats if f.get("side") not in ("+Z", "top")], case_config)
     lid = apply_all(lid, [f for f in feats if f.get("side") in ("+Z", "top")], case_config)
 

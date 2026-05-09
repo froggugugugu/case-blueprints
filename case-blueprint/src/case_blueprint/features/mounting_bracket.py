@@ -138,20 +138,57 @@ def _build_m5_screw_holes(part: Any, feature: dict, case_config: dict) -> Any:
     return part
 
 
+def resolve_targets(features: list[dict], objects: list[dict]) -> list[dict]:
+    """ribs style の features に target object id がついていれば、objects の
+    寸法情報を引いて `feature["computed"]["target_bbox"]` に詰める。
+
+    後方互換: feature.length / feature.target_width が手動指定されている
+    ケースでは computed は **上書きしない**(利用者編集を尊重)。
+
+    SKILL の generator 雛形で apply_all 前に呼ぶ:
+
+        feats = case_spec["case"].get("features") or []
+        feats = resolve_targets(feats, objects)
+    """
+    from ..geometry import object_bbox
+
+    by_id = {o["id"]: o for o in objects if "id" in o}
+    for f in features:
+        if f.get("type") != "mounting_bracket":
+            continue
+        if f.get("style") != "ribs":
+            continue
+        target = f.get("target")
+        if not target or target not in by_id:
+            continue
+        if "length" in f or "target_width" in f:
+            continue  # 手動指定優先
+        if "computed" in f and "target_bbox" in f.get("computed", {}):
+            continue  # 既に解決済み
+        bb = object_bbox(by_id[target])
+        f.setdefault("computed", {})["target_bbox"] = {
+            "width": bb.width, "depth": bb.depth, "height": bb.height,
+        }
+    return features
+
+
 def _build_ribs(part: Any, feature: dict, case_config: dict) -> Any:
     """target object の bounding box を内側から挟む 4 リブ。
 
-    target object の寸法情報は case_config から引かない(yaml 構造に依存しないため)。
-    呼び出し側(generator.py)が `feature["computed"]` に内寸基準の bbox を入れて
-    渡すか、既定で `length` / `width` / `height` を直接指定する形を採る。
+    target_bbox の解決順序(優先度高い順):
+    1. 手動指定: `feature.length` / `feature.target_width`
+    2. computed: `feature.computed.target_bbox`(generator が resolve_targets で詰める)
+    3. 既定: 50 × 50(後方互換のフォールバック)
     """
     del case_config
     import cadquery as cq  # noqa: F401
 
+    bb = feature.get("computed", {}).get("target_bbox", {})
+
     rib_h = float(feature.get("height", 5.0))
     rib_w = float(feature.get("width", 3.0))
-    target_l = float(feature.get("length", 50.0))   # リブの長さ(Y)
-    target_t = float(feature.get("target_width", 50.0))  # 対象 X 寸法
+    target_l = float(feature.get("length", bb.get("depth", 50.0)))   # リブの長さ(Y)
+    target_t = float(feature.get("target_width", bb.get("width", 50.0)))  # 対象 X 寸法
     base_z = float(feature.get("base_z", 0.0))      # 内側底面 Z
 
     # 4 隅にリブ柱(rib_w × rib_w × rib_h)を立てる例(簡易実装)

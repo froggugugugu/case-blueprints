@@ -243,6 +243,50 @@ class TestMountingBracketValidate:
             )
 
 
+class TestMountingBracketResolveTargets:
+    """ribs style の target id → bbox 自動解決(#10)。"""
+    def _obj(self, id_, w, d, h):
+        return {"id": id_, "name": id_, "shape": "rectangular",
+                "dimensions": {"width": w, "depth": d, "height": h}, "tolerance": 0}
+
+    def test_resolves_target_to_computed_bbox(self):
+        objs = [self._obj("pi-main", 85, 56, 18)]
+        feats = [{"type": "mounting_bracket", "style": "ribs",
+                  "target": "pi-main", "height": 5.0, "width": 3.0}]
+        out = mounting_bracket.resolve_targets(feats, objs)
+        bb = out[0]["computed"]["target_bbox"]
+        assert bb == {"width": 85.0, "depth": 56.0, "height": 18.0}
+
+    def test_unknown_target_skipped(self):
+        feats = [{"type": "mounting_bracket", "style": "ribs",
+                  "target": "ghost", "height": 5.0}]
+        out = mounting_bracket.resolve_targets(feats, [])
+        assert "computed" not in out[0]
+
+    def test_manual_length_takes_priority(self):
+        """手動 length が指定されていれば computed は付与しない(後方互換)"""
+        objs = [self._obj("x", 100, 80, 20)]
+        feats = [{"type": "mounting_bracket", "style": "ribs",
+                  "target": "x", "length": 50.0}]
+        out = mounting_bracket.resolve_targets(feats, objs)
+        assert "computed" not in out[0]
+
+    def test_non_ribs_skipped(self):
+        objs = [self._obj("x", 100, 80, 20)]
+        feats = [{"type": "mounting_bracket", "style": "m5_screw_holes",
+                  "target": "x", "side": "-Z"}]
+        out = mounting_bracket.resolve_targets(feats, objs)
+        assert "computed" not in out[0]
+
+    def test_already_computed_not_overwritten(self):
+        objs = [self._obj("x", 100, 80, 20)]
+        feats = [{"type": "mounting_bracket", "style": "ribs",
+                  "target": "x",
+                  "computed": {"target_bbox": {"width": 999, "depth": 999, "height": 999}}}]
+        out = mounting_bracket.resolve_targets(feats, objs)
+        assert out[0]["computed"]["target_bbox"]["width"] == 999
+
+
 # ===== body_text validate =====
 
 
@@ -404,3 +448,22 @@ class TestMountingBracketGeometry:
         # 円盤を貼って 4 穴を開ける。元体積より大きいはず(円盤の追加 > 4 穴の控除)
         v = result.val().Volume()
         assert v > box_volume_initial
+
+    def test_ribs_built_from_resolved_target_bbox(self, box, box_volume_initial):
+        """target → bbox 自動解決経由でも ribs が生成される。
+
+        box は原点中心 80×60×30。base_z=15(box の zmax)を指定し、
+        リブを上に立てて box 体積より増えることで union の発生を確認。
+        """
+        feats = [{"type": "mounting_bracket", "style": "ribs",
+                  "target": "device", "height": 4.0, "width": 2.0,
+                  "base_z": 15.0}]
+        objs = [{"id": "device", "shape": "rectangular",
+                 "dimensions": {"width": 40, "depth": 30, "height": 10},
+                 "tolerance": 0}]
+        feats = mounting_bracket.resolve_targets(feats, objs)
+        # computed.target_bbox が詰まっていることを直接確認(自動解決の証拠)
+        assert feats[0]["computed"]["target_bbox"]["width"] == 40.0
+        result = apply_all(box, feats, {})
+        # 4 リブが box の上に立つので volume が増える(2 × 2 × 4 × 4 リブ = 64 mm³)
+        assert result.val().Volume() > box_volume_initial
