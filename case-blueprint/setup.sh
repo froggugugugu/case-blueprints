@@ -85,14 +85,35 @@ cat <<EOF
 
 次のステップ:
   cd $TARGET
-  \$EDITOR project-config.yaml             # プリンタ機種・材料を記入
-  python3.11 -m venv .venv && source .venv/bin/activate
-  pip install -e ".[dev]"                  # cadquery + pyyaml + jsonschema + pytest + ruff
-  pytest                                    # smoke test(共通実装の動作確認)
-  claude                                    # → /lead で進行管理を始める
+  claude     # Claude Code を起動
 
-ヒント:
-  - /lead から始めると現在地と次の一手を提示してもらえます
-  - 直接 skill を呼ぶ場合: /measure → /design → /review-fix → /fit-check → /export
-  - ヒンジ蓋ケースは /hinged-lid init を併用
+起動後、以下のプロンプトを順に投げると /lead まで到達します:
+
+  ① 環境構築:
+     project-config.yaml を埋めて、Python 環境の構築(venv + pip install -e .)と
+     git 初期化までお願いします。プリンタは <機種>(造形 <X×Y×Z mm>、
+     ノズル <径> mm)、材料は <PETG / PLA など> をメインに使います。
+
+  ② プロジェクト開始:
+     /lead
+
+skill 早見表:
+  /lead         進行管理(現在地と次の一手を提示、初心者はこれだけで OK)
+  /measure      オブジェクトの採寸(URL や実測値を貼る)
+  /design       設計仕様統合 + CadQuery 生成
+  /review-fix   STEP/STL を見たフィードバック反映(ループ)
+  /fit-check    嵌合・干渉点検
+  /export       最終 STL/3MF 出力
+
+横断スキル(段階に属さず、必要なときに呼ぶ):
+  /hinged-lid   蓋がヒンジで開閉する「ヒンジ蓋ケース」を作るとき。
+                /design で closure.method = hinge_lever を選んだ後に
+                /hinged-lid init で蝶番・レバーラッチ・ピンの詳細を埋める。
+                通常の snap_fit / screws / magnetic 等のケースでは不要。
+  /style        意匠(未来感 / ミニマル / ファンシー / 角の処理 / 表面パターン)を
+                /style theme <name> で指定。/design 前後どちらでも呼べる。
+
+すぐ動く参照を見たい場合は claude 起動前に:
+  cp -R examples/minimal/input/. input/         # snap_fit 名刺ケース(最小)
+  cp -R examples/bike-navi-mvp/input/. input/   # features 7 種の総合例
 EOF

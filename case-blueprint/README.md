@@ -90,7 +90,7 @@ cp -R examples/bike-navi-mvp/input/. input/   # features 7 種の総合例
 - `/review-fix` — 段階 4: フィードバックを反映
 - `/fit-check` — 段階 4-5 橋渡し: 嵌合・干渉の点検
 - `/export` — 段階 5: 最終 STL/3MF 出力
-- `/hinged-lid` — **横断(機構特化)**: ヒンジ蓋ケースの closure 詳細を埋める
+- `/hinged-lid` — **横断(機構特化)**: 蓋がヒンジ(蝶番)で開閉する「ヒンジ蓋ケース」を作るときに使う。`/design` で `closure.method = hinge_lever` を選んだ後に `/hinged-lid init` を呼ぶと、軸ピン・レバーラッチ・ナックルの寸法を埋める(本体・蓋・レバーの 3 部品構成)。snap_fit / screws / magnetic 等の通常ケースでは **不要**
 - `/style` — **横断(意匠)**: 意匠テーマ(futuristic / minimal / fancy 等)+ 表面パターン + 角の処理を `case-config.yaml` の `style:` セクションに翻訳
 
 > 💡 **GitHub にプッシュする場合**: GitHub UI でリポジトリを作るときは
