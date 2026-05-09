@@ -1,7 +1,8 @@
 # case-blueprints
 
-> Amazon の部材 URL と自由記述メモを Claude に渡すと、3D プリント可能な
-> **ケース設計を生成・反復できる** Claude Code 用テンプレート。
+> 収納したい機器の **商品ページ URL** や **ノギスでの実測値**、自由記述メモを
+> Claude に渡すと、3D プリント可能な **ケース設計を生成・反復できる**
+> Claude Code 用テンプレート。
 > 採寸 → 仕様統合 → CadQuery 生成 → 可視化レビュー → 嵌合点検 → 印刷ファイル
 > までの 5 段階を、ヒューマンインザループで回す前提で設計されている。
 
@@ -14,14 +15,17 @@
 ```bash
 git clone https://github.com/froggugugugu/case-blueprints.git
 bash case-blueprints/case-blueprint/setup.sh ./my-case
-cp -R ./my-case/examples/bike-navi-mvp/input/. ./my-case/input/   # 動く参照例で始める場合
 cd ./my-case && python3 -m venv .venv && .venv/bin/pip install -e .
-.venv/bin/claude   # → プロンプトで /lead 等を呼ぶ
+.venv/bin/claude   # → プロンプトで /lead を呼んで対話開始
 ```
 
-`bike-navi-mvp` の入力をコピーして始めれば、最初から **features 7 種・PETG・
-heat-set + RAM ボール** までセットされた状態で `/design` を呼べます。
-ゼロから始める場合は `examples/minimal/`(snap_fit 名刺ケース)推奨。
+すぐに動く参照を見たい場合は、起動前に `examples/` から 1 件をコピー:
+
+```bash
+cp -R ./my-case/examples/minimal/input/. ./my-case/input/        # snap_fit 名刺ケース(最小)
+# または
+cp -R ./my-case/examples/bike-navi-mvp/input/. ./my-case/input/  # features 7 種の総合例
+```
 
 ---
 
@@ -59,18 +63,19 @@ heat-set + RAM ボール** までセットされた状態で `/design` を呼べ
 
 ---
 
-## 使い方の流れ — 部材 URL からヒューマンインザループまで
+## 使い方の流れ — 入力からヒューマンインザループまで
 
 このリポは「ポン出し」ではなく **設計を育てるプロセス** を回すためのものです。
 利用者が用意するもの・Claude が生成するもの・人間が補正するものが明確に分離。
 
 ```text
-[利用者が用意するもの]
-  ├─ 部材の Amazon / 公式仕様 URL(寸法・コネクタ・発熱情報の出所)
-  ├─ デザインのイメージ URL(他のケース写真、参考になる類例)
+[利用者が用意するもの — 何でもよい組み合わせ]
+  ├─ 商品ページや公式仕様の URL(寸法・コネクタ・発熱情報の出所として)
+  ├─ ノギス等での実測値(URL が無い / 寸法が信用できないとき)
+  ├─ 参考になるデザインのイメージ URL(類例の写真・図面)
   └─ 自由記述メモ(用途、運用環境、必須要件)
                     ↓
-       /measure — Claude が URL を読み 採寸結果を yaml 化
+       /measure — Claude が URL や実測値から 採寸結果を yaml 化
                   人間は AskUserQuestion で正面・寸法・公差を確認
                     ↓
        /design  — case-spec.yaml(初稿) + generator.py 生成
@@ -92,6 +97,10 @@ heat-set + RAM ボール** までセットされた状態で `/design` を呼べ
                                   本体不変原則(P15)を守って蓋側で吸収
 ```
 
+入力は「URL だけ」「実測値だけ」「両方」のいずれでも始められます。
+URL は寸法情報の出所として便利ですが、商品ページの寸法表記が信用できない
+場合は **実測が優先** されます(`/measure` で実測値で上書きする運用)。
+
 進行管理は **`/lead`**(PdM 相当)が現状把握 → 次の一手を提示。L2 利用者は
 `/lead` だけ呼べば十分なケースが多い。
 
@@ -104,10 +113,10 @@ heat-set + RAM ボール** までセットされた状態で `/design` を呼べ
 
 | ステップ | 入力 | 動くようになるもの |
 |---|---|---|
-| **最小** | examples/minimal/ をコピー | snap_fit 名刺ケース、`/design` から確認 |
-| **典型** | `/measure` で 1-3 オブジェクトを採寸 | snap_fit / screws / magnetic / hinge 系の任意 closure |
-| **複合** | examples/bike-navi-mvp を参考に features 7 種 | 屋外・車載案件、heat-set + RAM ボール + 防水 |
-| **3D 配置** | `case-spec.layout.arrangement: manual` | 複数 objects を [x,y,z] で配置、AABB 干渉自動検出 |
+| **最小** | 1 オブジェクト + 単純 closure | snap_fit / 名刺ケース相当(参考: examples/minimal/) |
+| **典型** | 1-3 オブジェクト + closure 選択 | snap_fit / screws / magnetic / hinge_lever / snap_lip_with_hinge |
+| **複合** | features 多用 + 屋外・車載対応 | display_window + cable_port + button_cutout + ventilation 等(参考: examples/bike-navi-mvp/) |
+| **3D 配置** | 複数 objects を `position: [x, y, z]` で配置 | `layout.arrangement: manual`、AABB 干渉自動検出 |
 
 ---
 
